@@ -119,7 +119,7 @@ contract StakeWatcher is AbstractReactive {
     /// @dev Routes on topic0 and checks opCode (topic count) before decoding anything.
     function react(LogRecord memory log_) external onlySystem {
         if (log_.topic0 == CRON100_TOPIC_0) {
-            if (log_.opCode != 1 || log_.contractAddress != LEGACY_SYSTEM_ADDR) return;
+            if (log_.opCode != 2 || log_.contractAddress != LEGACY_SYSTEM_ADDR) return;
             if (!paused && vault != address(0)) _tick();
             return;
         }

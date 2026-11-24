@@ -52,7 +52,7 @@ contract StakeWatcherTest is Test {
     function _cron() internal {
         IReactive.LogRecord memory l;
         l.topic0 = CRON100;
-        l.opCode = 1;
+        l.opCode = 2;
         l.contractAddress = LEGACY;
         vm.prank(SYSTEM_ADDR);
         watcher.react(l);
