@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Stake — lock ETH on a weekly goal</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.13.4/ethers.umd.min.js"></script>
+<style>
+  :root {
+    --navy: #0a1128;
+    --navy2: #101c3f;
+    --navy3: #1a2a52;
+    --red: #e5383b;
+    --red2: #ba181b;
+    --ink: #d7dce8;
+    --dim: #8a93ad;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--navy);
+    color: var(--ink);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 15px;
+    line-height: 1.5;
+  }
+  main { max-width: 760px; margin: 0 auto; padding: 24px 16px 80px; }
+  h1 { font-size: 26px; margin: 8px 0 2px; color: var(--red); letter-spacing: 1px; }
+  h2 { font-size: 17px; color: var(--red); margin: 34px 0 10px; border-bottom: 1px solid var(--navy3); padding-bottom: 6px; }
+  a { color: var(--red); }
+  .banner {
+    background: var(--red2);
+    color: #f4e9e9;
+    padding: 8px 14px;
+    font-size: 13px;
+    text-align: center;
+  }
+  .card {
+    background: var(--navy2);
+    border: 1px solid var(--navy3);
+    border-radius: 8px;
+    padding: 16px;
+    margin: 12px 0;
+  }
+  button {
+    background: var(--red);
+    color: #f4e9e9;
+    border: 0;
+    border-radius: 6px;
+    padding: 9px 18px;
+    font: inherit;
+    font-weight: bold;
+    cursor: pointer;
+  }
+  button:disabled { background: var(--navy3); color: var(--dim); cursor: default; }
+  button.ghost { background: transparent; border: 1px solid var(--red); color: var(--red); }
+  input, select {
+    width: 100%;
+    background: var(--navy);
+    border: 1px solid var(--navy3);
+    color: var(--ink);
+    border-radius: 6px;
+    padding: 8px 10px;
+    font: inherit;
+    margin: 3px 0 10px;
+  }
+  label { font-size: 12px; color: var(--dim); display: block; }
+  .row { display: flex; gap: 12px; }
+  .row > div { flex: 1; }
+  .weeks { display: flex; gap: 6px; flex-wrap: wrap; margin: 8px 0; }
+  .week {
+    width: 34px; height: 34px;
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: bold;
+    border: 1px solid var(--navy3);
+    background: var(--navy3);
+    color: var(--dim);
+  }
+  .week.confirmed { background: var(--navy3); color: var(--ink); border-color: var(--ink); }
+  .week.forfeited { background: var(--red2); color: #f4e9e9; border-color: var(--red2); }
+  .week.running { background: var(--red); color: #f4e9e9; border-color: var(--red); animation: pulse 1.5s infinite; }
+  @keyframes pulse { 50% { opacity: 0.55; } }
+  .muted { color: var(--dim); font-size: 13px; }
+  .mono { word-break: break-all; font-size: 12.5px; }
+  table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  td, th { text-align: left; padding: 5px 8px 5px 0; vertical-align: top; border-bottom: 1px solid var(--navy3); }
+  th { color: var(--dim); font-weight: normal; }
+  .status-line { min-height: 20px; font-size: 13px; color: var(--red); margin: 6px 0; }
+  .goalhead { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 6px; }
+</style>
+</head>
+<body>
+<div class="banner">Testnet only — Base Sepolia + Reactive Lasna. No real money. Built for the Reactive Omni Buildathon.</div>
+<main>
+  <h1>STAKE</h1>
+  <p class="muted">Lock ETH on a weekly goal. A friend confirms each week. Miss a week, lose that week's slice.
+  Finish the goal, get the rest back. No bot, no server — a Reactive Network contract does the chasing.</p>
+
+  <div class="card">
+    <div class="row" style="align-items:center">
+      <div>
+        <div id="acct" class="muted">Wallet not connected</div>
+        <div id="net" class="muted" style="font-size:12px"></div>
+      </div>
+      <div style="flex:0"><button id="connect">Connect wallet</button></div>
+    </div>
+    <div class="status-line" id="netwarn"></div>
+  </div>
+
+  <h2>New goal</h2>
+  <div class="card">
+    <label>Referee — the friend's wallet that confirms each week</label>
+    <input id="f-referee" placeholder="0x…" spellcheck="false">
+    <label>Penalty wallet — missed slices go here</label>
+    <input id="f-penalty" placeholder="0x…" spellcheck="false">
+    <div class="row">
+      <div>
+        <label>Weeks (1–12)</label>
+        <input id="f-weeks" type="number" min="1" max="12" value="2">
+      </div>
+      <div>
+        <label>Period length</label>
+        <select id="f-period">
+          <option value="600">10 minutes (demo)</option>
+          <option value="604800" selected>1 week</option>
+        </select>
+      </div>
+      <div>
+        <label>Stake (ETH)</label>
+        <input id="f-stake" type="number" step="0.0001" min="0" value="0.001">
+      </div>
+    </div>
+    <button id="create">Lock stake</button>
+    <div class="status-line" id="createmsg"></div>
+  </div>
+
+  <h2>Your goals</h2>
+  <div class="muted" style="margin-bottom:6px">Goals where you are the owner or the referee. <a href="#" id="refresh">refresh</a></div>
+  <div id="goals"><div class="muted">Connect a wallet first.</div></div>
+
+  <h2>Contracts</h2>
+  <div class="card mono">
+    StakeVault (Base Sepolia) —
+    <a href="https://sepolia.basescan.org/address/0x1a4197d80997e285f0f2b928B0d6441444Cb1f8b" target="_blank" rel="noopener">0x1a4197d80997e285f0f2b928B0d6441444Cb1f8b</a><br>
+    StakeWatcher (Reactive Lasna) —
+    <a href="https://lasna.reactscan.net/address/0x1a4197d80997e285f0f2b928B0d6441444Cb1f8b" target="_blank" rel="noopener">0x1a4197d80997e285f0f2b928B0d6441444Cb1f8b</a>
+  </div>
+
+  <h2>Proof — a real run on testnet</h2>
+  <div class="card">
+    <p class="muted" style="margin-top:0">A 2-week goal with 10-minute weeks. Week 1 confirmed, week 2 skipped.
+    The watcher paid the week's slice to the penalty wallet, then released the rest. No human touched it after the check-in.</p>
+    <table id="proof">
+      <tr><th>Step</th><th>Chain</th><th>Tx</th></tr>
+    </table>
+  </div>
+
+  <p class="muted" style="margin-top:30px">Open source, MIT licence —
+  <a href="https://github.com/Afar88/stake" target="_blank" rel="noopener">github.com/Afar88/stake</a></p>
+</main>
+
+<script>
+const VAULT = "0x1a4197d80997e285f0f2b928B0d6441444Cb1f8b";
+const CHAIN_ID = 84532;
+const BASESCAN = "https://sepolia.basescan.org/tx/";
+const REACTSCAN = "https://lasna.reactscan.net/tx/";
+
+const VAULT_ABI = [
+  "function createGoal(address referee, address penaltyTo, uint8 weeks, uint64 periodSeconds) payable returns (uint256)",
+  "function confirm(uint256 goalId)",
+  "function goalCount() view returns (uint256)",
+  "function goals(uint256) view returns (address owner, address referee, address penaltyTo, uint256 stake, uint256 forfeited, uint8 numWeeks, uint64 periodSeconds, uint64 startTime, uint16 confirmedMask, uint16 settledMask, bool active)",
+  "event GoalCreated(uint256 indexed goalId, address indexed owner, address referee, address penaltyTo, uint256 stake, uint8 weeks, uint64 periodSeconds, uint64 startTime)"
+];
+
+const PROOF = [
+  ["GoalCreated", "Base Sepolia", "0xa9e80fe31e96b07411747469b743cc982a4136fc106058e4d9ceabd95f7b0bfe", BASESCAN],
+  ["CheckedIn (week 1)", "Base Sepolia", "0x17daaf0ded1adee12542e6901f58e2478f195a04014bcf7203b6b5a4106cbb08", BASESCAN],
+  ["Mirror: GoalCreated", "Lasna", "0x9d99986f35cd577c73b079b71f4b4be697db40acad980d3092644448efe7714a", REACTSCAN],
+  ["Mirror: CheckedIn", "Lasna", "0xf8863f83665097b8c72789ec6f1d50f0afcdc6b6cf534472cccac877c9247f1b", REACTSCAN],
+  ["Cron tick → forfeit requested", "Lasna", "0x20b2b063746c32ca21669ee4a1a4bfc6f1a71e46ba9a0f2ed60183415019c9fc", REACTSCAN],
+  ["Forfeited — 0.00075 ETH → penalty", "Base Sepolia", "0x4feb88c73b9276e453fce3c78ca559f4d4f02b8eb9b8e6e029c50d7d7b914c5a", BASESCAN],
+  ["Mirror: Forfeited", "Lasna", "0x5676ea7c2625883956407ee88f1fbcc263b5c1ef5b8b1e5ad51135655ec0187f", REACTSCAN],
+  ["Cron tick → release requested", "Lasna", "0xa3bc3d85cb171ddccd148381c138215e496a68481d23c856573492ad9029a5ba", REACTSCAN],
+  ["Released — 0.00075 ETH → owner", "Base Sepolia", "0x347c8e833158fa8d32070096761b5af29c6a3f4ea03d4abcac9e4aa3c480528b", BASESCAN],
+  ["Mirror: Released", "Lasna", "0x5fd359976e86f0c286e08621a6574790a9cededb212a2abb654eb7f74747c0a6", REACTSCAN],
+];
+
+let provider, signer, account;
+
+const $ = id => document.getElementById(id);
+const short = a => a.slice(0, 6) + "…" + a.slice(-4);
+
+// proof table
+for (const [label, chain, hash, base] of PROOF) {
+  const tr = document.createElement("tr");
+  tr.innerHTML = `<td>${label}</td><td>${chain}</td><td class="mono"><a href="${base}${hash}" target="_blank" rel="noopener">${hash.slice(0, 18)}…</a></td>`;
+  $("proof").appendChild(tr);
+}
+
+async function connect() {
+  if (!window.ethereum) { $("netwarn").textContent = "No wallet found — install MetaMask or another injected wallet."; return; }
+  provider = new ethers.BrowserProvider(window.ethereum);
+  await provider.send("eth_requestAccounts", []);
+  signer = await provider.getSigner();
+  account = await signer.getAddress();
+  $("acct").textContent = short(account);
+  const net = await provider.getNetwork();
+  $("net").textContent = "chain " + net.chainId;
+  if (Number(net.chainId) !== CHAIN_ID) {
+    $("netwarn").textContent = "Wrong network — switch to Base Sepolia.";
+    try {
+      await window.ethereum.request({ method: "wallet_switchEthereumChain", params: [{ chainId: "0x" + CHAIN_ID.toString(16) }] });
+    } catch (e) {
+      if (e.code === 4902) {
+        await window.ethereum.request({ method: "wallet_addEthereumChain", params: [{
+          chainId: "0x" + CHAIN_ID.toString(16),
+          chainName: "Base Sepolia",
+          nativeCurrency: { name: "ETH", symbol: "ETH", decimals: 18 },
+          rpcUrls: ["https://sepolia.base.org"],
+          blockExplorerUrls: ["https://sepolia.basescan.org"]
+        }]});
+      }
+    }
+    provider = new ethers.BrowserProvider(window.ethereum);
+    signer = await provider.getSigner();
+  }
+  await loadGoals();
+}
+
+function fmtLeft(sec) {
+  if (sec <= 0) return "ended";
+  const m = Math.floor(sec / 60), s = Math.floor(sec % 60);
+  return m > 0 ? `${m}m ${s}s left` : `${s}s left`;
+}
+
+async function loadGoals() {
+  if (!signer) return;
+  const el = $("goals");
+  el.innerHTML = '<div class="muted">Loading…</div>';
+  try {
+    const vault = new ethers.Contract(VAULT, VAULT_ABI, signer);
+    const count = Number(await vault.goalCount());
+    const me = account.toLowerCase();
+    const mine = [];
+    for (let i = 0; i < count; i++) {
+      const g = await vault.goals(i);
+      if (g.owner.toLowerCase() === me || g.referee.toLowerCase() === me) mine.push([i, g]);
+    }
+    if (!mine.length) { el.innerHTML = '<div class="muted">No goals yet for this wallet.</div>'; return; }
+    el.innerHTML = "";
+    const now = Math.floor(Date.now() / 1000);
+    for (const [id, g] of mine.reverse()) {
+      el.appendChild(renderGoal(id, g, now));
+    }
+  } catch (e) {
+    el.innerHTML = '<div class="muted">Could not read goals — wrong network?</div>';
+  }
+}
+
+function renderGoal(id, g, now) {
+  const card = document.createElement("div");
+  card.className = "card";
+  const weeks = Number(g.numWeeks);
+  const period = Number(g.periodSeconds);
+  const start = Number(g.startTime);
+  const cur = Math.floor((now - start) / period);
+  const slice = g.stake / BigInt(weeks);
+
+  let boxes = "";
+  for (let p = 0; p < weeks; p++) {
+    const confirmed = (Number(g.confirmedMask) >> p) & 1;
+    const settled = (Number(g.settledMask) >> p) & 1;
+    let cls = "week";
+    if (settled) cls += " forfeited";
+    else if (confirmed) cls += " confirmed";
+    else if (g.active && p === cur) cls += " running";
+    const label = settled ? "✗" : confirmed ? "✓" : (p + 1);
+    boxes += `<div class="${cls}" title="week ${p + 1}">${label}</div>`;
+  }
+
+  const ended = now >= start + weeks * period;
+  const curEnd = start + (Math.min(cur, weeks - 1) + 1) * period;
+  const role = g.owner.toLowerCase() === account.toLowerCase() ? "owner" : "referee";
+  const state = !g.active ? "finished — stake returned" : ended ? "last week ended — settling" : `week ${Math.min(cur + 1, weeks)} of ${weeks} — ${fmtLeft(curEnd - now)}`;
+
+  card.innerHTML = `
+    <div class="goalhead">
+      <b>Goal #${id}</b>
+      <span class="muted">${state}</span>
+    </div>
+    <div class="weeks">${boxes}</div>
+    <div class="muted">
+      stake ${ethers.formatEther(g.stake)} ETH · slice ${ethers.formatEther(slice)} ETH ·
+      forfeited so far ${ethers.formatEther(g.forfeited)} ETH · you are the ${role}<br>
+      referee <span class="mono">${short(g.referee)}</span> · penalty to <span class="mono">${short(g.penaltyTo)}</span>
+    </div>
+  `;
+
+  const canConfirm = g.active && role === "referee" || (g.active && g.referee.toLowerCase() === account.toLowerCase());
+  const already = cur < weeks && ((Number(g.confirmedMask) >> cur) & 1);
+  if (g.active && g.referee.toLowerCase() === account.toLowerCase() && cur < weeks && !already && !ended) {
+    const btn = document.createElement("button");
+    btn.textContent = `Confirm week ${cur + 1}`;
+    btn.style.marginTop = "10px";
+    btn.onclick = async () => {
+      btn.disabled = true;
+      btn.textContent = "Sending…";
+      try {
+        const vault = new ethers.Contract(VAULT, VAULT_ABI, signer);
+        const tx = await vault.confirm(id);
+        btn.textContent = "Confirming…";
+        await tx.wait();
+        btn.textContent = "Confirmed ✓";
+        setTimeout(loadGoals, 1500);
+      } catch (e) {
+        btn.disabled = false;
+        btn.textContent = `Confirm week ${cur + 1}`;
+        alert("Confirm failed: " + (e.shortMessage || e.message));
+      }
+    };
+    card.appendChild(btn);
+  }
+  return card;
+}
+
+$("connect").onclick = connect;
+$("refresh").onclick = (e) => { e.preventDefault(); loadGoals(); };
+
+$("create").onclick = async () => {
+  const msg = $("createmsg");
+  msg.textContent = "";
+  if (!signer) { msg.textContent = "Connect a wallet first."; return; }
+  try {
+    const referee = ethers.getAddress($("f-referee").value.trim());
+    const penalty = ethers.getAddress($("f-penalty").value.trim());
+    const weeks = Number($("f-weeks").value);
+    const period = Number($("f-period").value);
+    const stake = ethers.parseEther(String($("f-stake").value));
+    if (!(weeks >= 1 && weeks <= 12)) throw new Error("weeks must be 1–12");
+    if (stake <= 0n) throw new Error("stake must be above zero");
+    const vault = new ethers.Contract(VAULT, VAULT_ABI, signer);
+    $("create").disabled = true;
+    msg.textContent = "Sending…";
+    const tx = await vault.createGoal(referee, penalty, weeks, period, { value: stake });
+    msg.textContent = "In block… " + tx.hash.slice(0, 18) + "…";
+    const rc = await tx.wait();
+    msg.innerHTML = `Goal created — <a href="${BASESCAN}${tx.hash}" target="_blank" rel="noopener">${tx.hash.slice(0, 18)}…</a>`;
+    setTimeout(loadGoals, 1500);
+  } catch (e) {
+    msg.textContent = e.shortMessage || e.message;
+  } finally {
+    $("create").disabled = false;
+  }
+};
+
+if (window.ethereum) {
+  window.ethereum.on("accountsChanged", () => location.reload());
+  window.ethereum.on("chainChanged", () => location.reload());
+}
+</script>
+</body>
+</html>
