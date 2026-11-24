@@ -47,16 +47,16 @@ A real 2-week goal, week 1 confirmed, week 2 skipped. The watcher did the rest o
 
 | Step | Chain | Tx hash |
 | --- | --- | --- |
-| GoalCreated | Base Sepolia | `0xa9e80fe31e96b07411747469b743cc982a4136fc106058e4d9ceabd95f7b0bfe` |
-| CheckedIn (week 1) | Base Sepolia | `0x17daaf0ded1adee12542e6901f58e2478f195a04014bcf7203b6b5a4106cbb08` |
-| Mirror: GoalCreated | Lasna | `0x9d99986f35cd577c73b079b71f4b4be697db40acad980d3092644448efe7714a` |
-| Mirror: CheckedIn | Lasna | `0xf8863f83665097b8c72789ec6f1d50f0afcdc6b6cf534472cccac877c9247f1b` |
-| Cron tick → forfeit requested | Lasna | `0x20b2b063746c32ca21669ee4a1a4bfc6f1a71e46ba9a0f2ed60183415019c9fc` |
-| **Forfeited** — 0.00075 ETH → penalty | Base Sepolia | `0x4feb88c73b9276e453fce3c78ca559f4d4f02b8eb9b8e6e029c50d7d7b914c5a` |
-| Mirror: Forfeited | Lasna | `0x5676ea7c2625883956407ee88f1fbcc263b5c1ef5b8b1e5ad51135655ec0187f` |
-| Cron tick → release requested | Lasna | `0xa3bc3d85cb171ddccd148381c138215e496a68481d23c856573492ad9029a5ba` |
-| **Released** — 0.00075 ETH → owner | Base Sepolia | `0x347c8e833158fa8d32070096761b5af29c6a3f4ea03d4abcac9e4aa3c480528b` |
-| Mirror: Released | Lasna | `0x5fd359976e86f0c286e08621a6574790a9cededb212a2abb654eb7f74747c0a6` |
+| GoalCreated | Base Sepolia | `0xaba8c015b7aec873d308dd93abb4b7f06a8939e3dd69c1676ef995cc1f295be5` |
+| CheckedIn (week 1) | Base Sepolia | `0xa06d5fa461b16319315ff902e36784491d29ad7b6ed9ae90b872ddd65582b4d3` |
+| Mirror: GoalCreated | Lasna | `0xf3068d5f575620f3cb46dc87247a7330eb77e0b1cb6ed0193d79efd10a7ec5dd` |
+| Mirror: CheckedIn | Lasna | `0xc817a14a471b4c742770f635e67fc472fffb8c441c0b9e68ab63cf5a085563e2` |
+| Cron tick → forfeit requested | Lasna | `0x68c35fc02046c950a7a28aacd8bcdc6ab214a6d50679d9689b442a9016be2914` |
+| **Forfeited** — 0.00075 ETH → penalty | Base Sepolia | `0xf0c334581d5c5dacfdec55a7ece6d19c7e4765bdd369d15e87fcd9fa0f90ef05` |
+| Mirror: Forfeited | Lasna | `0x31a7a34d815d790bb3d525d83b3387a401bb821eaef855d4c4dbf46b4b9a18c4` |
+| Cron tick → release requested | Lasna | `0x31a82aeb9e2cd5be536d029aab1b41865ef978fe8218f734e7cbd918da13ff34` |
+| **Released** — 0.00075 ETH → owner | Base Sepolia | `0x3bf42e4e9004e5b028d05c24623522ecede2e7ceb8885948b9108c8c5e13b181` |
+| Mirror: Released | Lasna | `0x6dd414596d810d4802ed548d23ac7c578366f308a3df61ade598520b6e44a0fd` |
 
 The forfeit callback landed about one minute after week 2 ended (one cron tick). The release followed one tick after the watcher saw the `Forfeited` log. The watcher is now paused (`pause()`) so it no longer pays for cron ticks.
 
