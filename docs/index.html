@@ -177,13 +177,14 @@
     <a href="https://lasna.reactscan.net/address/0x49012E6b5C0441324B0fA7C78e616a4852ddeB0D" target="_blank" rel="noopener">0x49012E6b5C0441324B0fA7C78e616a4852ddeB0D</a>
   </div>
 
-  <h2>Proof — a real run on testnet</h2>
+  <h2>Proof — live from the chain</h2>
   <div class="card">
-    <p class="muted" style="margin-top:0">A 2-week goal — "Run 3 times a week" — with 10-minute weeks. Week 1 confirmed, week 2 skipped.
-    The watcher paid the week's slice to the penalty wallet, then released the rest. No human touched it after the check-in.</p>
+    <p class="muted" style="margin-top:0">Every goal, check-in, forfeit and release on the vault — read directly from the chain
+    and updated by itself as new transactions land. No database, no server.</p>
     <table id="proof">
-      <tr><th>Step</th><th>Chain</th><th>Tx</th></tr>
+      <tr><th>Event</th><th>When</th><th>Tx</th></tr>
     </table>
+    <p class="muted" id="proofstatus" style="margin-bottom:0">Reading the chain…</p>
   </div>
 
   <p class="muted" style="margin-top:30px">Open source, MIT licence —
@@ -205,29 +206,73 @@ const VAULT_ABI = [
   "event GoalCreated(uint256 indexed goalId, address indexed owner, address referee, address penaltyTo, uint256 stake, uint8 weeks, uint64 periodSeconds, uint64 startTime)"
 ];
 
-const PROOF = [
-  ["GoalCreated", "Base Sepolia", "0xb989f5dbf699e67a26867e526a976acee8d9d6e73770d42cfa0fd73518c8a484", BASESCAN],
-  ["CheckedIn (week 1)", "Base Sepolia", "0xf9ea5ea806c5cba4ee2d9f4a6a67d3b9031c3323cbcd5f569cf50e0513222eff", BASESCAN],
-  ["Mirror: GoalCreated", "Lasna", "0x631bb0e00ff5bdcf65cfd5ae86a27ab33fb59e7ef3796244a74c422540332925", REACTSCAN],
-  ["Mirror: CheckedIn", "Lasna", "0x3bf5bff8cf3e2b002cc0efdd81f838e7b73e61a34ac10b8784838ab7d7ec8cd5", REACTSCAN],
-  ["Cron tick → forfeit requested", "Lasna", "0xee58195d29f94671b9f531cfd9a00da2fe284336b5448b524fa4267c412ff9ce", REACTSCAN],
-  ["Forfeited — 0.00075 ETH → penalty", "Base Sepolia", "0xd5d225604308c13cd92e9302d2bfd68eb51d2a04111570c2392e7b6e89a93406", BASESCAN],
-  ["Mirror: Forfeited", "Lasna", "0xa6077291065b6b8002bf1383ce77cae6675ecf87865dc770246f4668ef784a15", REACTSCAN],
-  ["Cron tick → release requested", "Lasna", "0xdc36d17723c5e987db5092f14112e72f2e21f4d7e12472e57fd1dcc5c55d49bf", REACTSCAN],
-  ["Released — 0.00075 ETH → owner", "Base Sepolia", "0x990fc1f23cb1d3bb8403625295de657500124e97d86cb18b3b283b98386eb1d8", BASESCAN],
-  ["Mirror: Released", "Lasna", "0x3344ecbb503d716c434361fa8b51fa1e7cb52f684e8cb814d35fb46d27d3bb50", REACTSCAN],
-];
+const READ_RPC = "https://base-sepolia-rpc.publicnode.com";
+const EV_NAMES = {
+  "0x8a7f03fed9c9090a2c6c5c26d94e408b1fb0a4852e67323703424212fad03474": "Goal created",
+  "0xace05157c2c2e541f757661832e461481f06aec5918b9ddecb33a8bd4a32da63": "Checked in",
+  "0x1b1ae4e81ca3c511bc7d341fa83040a8179f1b37ff7f336d1e27e655567d87d5": "Forfeited",
+  "0xd5840651550c173a8bf246eede440a59253bc61eadb2e8887168faad2fad631d": "Released",
+};
 
 let provider, signer, account;
 
 const $ = id => document.getElementById(id);
 const short = a => a.slice(0, 6) + "…" + a.slice(-4);
 
-for (const [label, chain, hash, base] of PROOF) {
-  const tr = document.createElement("tr");
-  tr.innerHTML = `<td>${label}</td><td>${chain}</td><td class="mono"><a href="${base}${hash}" target="_blank" rel="noopener">${hash.slice(0, 18)}…</a></td>`;
-  $("proof").appendChild(tr);
+function fmtWhen(ts) {
+  const d = new Date(ts * 1000);
+  return d.toLocaleString(undefined, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
 }
+
+async function loadProof() {
+  const status = $("proofstatus");
+  try {
+    const rp = new ethers.JsonRpcProvider(READ_RPC);
+    const latest = await rp.getBlockNumber();
+    const topicList = Object.keys(EV_NAMES);
+    const CHUNK = 44000;
+    let logs = [];
+    for (let i = 0; i < 3; i++) {
+      const to = latest - i * CHUNK;
+      if (to < 0) break;
+      const from = Math.max(to - CHUNK + 1, 0);
+      logs = logs.concat(await rp.getLogs({ address: VAULT, fromBlock: from, toBlock: to, topics: [topicList] }));
+    }
+    logs.sort((a, b) => a.blockNumber - b.blockNumber || a.index - b.index);
+    const texts = {};
+    const goals = [...new Set(logs.map(l => Number(BigInt(l.topics[1]))))];
+    const vaultRead = new ethers.Contract(VAULT, VAULT_ABI, rp);
+    await Promise.all(goals.map(async g => {
+      try { texts[g] = await vaultRead.goalText(g); } catch (e) { texts[g] = ""; }
+    }));
+    const blockTimes = {};
+    await Promise.all([...new Set(logs.map(l => l.blockNumber))].map(async bn => {
+      try { blockTimes[bn] = (await rp.getBlock(bn)).timestamp; } catch (e) { blockTimes[bn] = 0; }
+    }));
+    const table = $("proof");
+    table.innerHTML = `<tr><th>Event</th><th>When</th><th>Tx</th></tr>`;
+    let lastGoal = null;
+    for (const l of logs) {
+      const g = Number(BigInt(l.topics[1]));
+      if (g !== lastGoal) {
+        lastGoal = g;
+        const tr = document.createElement("tr");
+        const t = (texts[g] || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        tr.innerHTML = `<td colspan="3" style="padding-top:10px"><b>Goal #${g}</b>${t ? ` — “${t}”` : ""}</td>`;
+        table.appendChild(tr);
+      }
+      const tr = document.createElement("tr");
+      const when = blockTimes[l.blockNumber] ? fmtWhen(blockTimes[l.blockNumber]) : "";
+      tr.innerHTML = `<td>${EV_NAMES[l.topics[0]] || "Event"}</td><td>${when}</td><td class="mono"><a href="${BASESCAN}${l.transactionHash}" target="_blank" rel="noopener">${l.transactionHash.slice(0, 14)}…</a></td>`;
+      table.appendChild(tr);
+    }
+    status.textContent = logs.length ? `${logs.length} events across ${goals.length} goals — updates live` : "No events found yet.";
+  } catch (e) {
+    status.textContent = "Could not read the chain just now — retrying.";
+  }
+}
+loadProof();
+setInterval(loadProof, 15000);
 
 function plainError(e) {
   const msg = (e && (e.shortMessage || e.message) || "").toLowerCase();
@@ -412,14 +457,25 @@ $("refresh").onclick = (e) => { e.preventDefault(); loadGoals(); };
 
 setInterval(() => {
   const now = Math.floor(Date.now() / 1000);
+  let refresh = false;
   for (const el of document.querySelectorAll(".cd")) {
     if (el.dataset.active !== "1") continue;
     const start = +el.dataset.start, period = +el.dataset.period, weeks = +el.dataset.weeks;
     const cur = Math.floor((now - start) / period);
-    if (now >= start + weeks * period) { el.textContent = "last week ended — settling"; continue; }
+    const ended = now >= start + weeks * period;
+    const wk = ended ? "end" : String(Math.min(cur + 1, weeks));
+    if (el.dataset.wk && el.dataset.wk !== wk) refresh = true;
+    el.dataset.wk = wk;
+    if (ended) {
+      el.textContent = "last week ended — settling (a few minutes)";
+      el.dataset.endticks = String(+(el.dataset.endticks || 0) + 1);
+      if (+el.dataset.endticks % 2 === 0) refresh = true;
+      continue;
+    }
     const curEnd = start + (Math.min(cur, weeks - 1) + 1) * period;
     el.textContent = `week ${Math.min(cur + 1, weeks)} of ${weeks} — ${fmtLeft(curEnd - now)}`;
   }
+  if (refresh) loadGoals();
 }, 1000);
 
 $("create").onclick = async () => {
