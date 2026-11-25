@@ -255,6 +255,9 @@ async function connect() {
     }
     $("switchnet").style.display = "none";
     $("netwarn").textContent = "";
+    const btn = $("connect");
+    btn.textContent = "Connected ✓ " + short(account);
+    btn.disabled = true;
     await loadGoals();
   } catch (e) {
     $("netwarn").textContent = plainError(e);
@@ -275,6 +278,9 @@ async function onSwitchNet() {
       $("switchnet").style.display = "none";
       $("netwarn").textContent = "";
       $("net").textContent = "chain " + net.chainId;
+      const btn = $("connect");
+      btn.textContent = "Connected ✓ " + short(account);
+      btn.disabled = true;
       await loadGoals();
     }
   } catch (e) {
