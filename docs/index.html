@@ -343,7 +343,7 @@ function renderGoal(id, g, now, text) {
   const state = !g.active ? "finished — stake returned" : ended ? "last week ended — settling" : `week ${Math.min(cur + 1, weeks)} of ${weeks} — ${fmtLeft(curEnd - now)}`;
 
   card.innerHTML = `
-    ${text ? `<div style="color:var(--ink);font-size:15px;margin-bottom:6px">“${text.replace(/</g, "&lt;")}”</div>` : ""}
+    ${text ? `<div style="color:var(--ink);font-size:15px;margin-bottom:6px">“${text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")}”</div>` : ""}
     <div class="goalhead">
       <b>Goal #${id}</b>
       <span class="muted cd" data-start="${start}" data-period="${period}" data-weeks="${weeks}" data-active="${g.active ? 1 : 0}">${state}</span>
