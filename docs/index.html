@@ -424,7 +424,7 @@ setInterval(() => {
     if (ended) {
       el.textContent = "last week ended — settling (a few minutes)";
       el.dataset.endticks = String(+(el.dataset.endticks || 0) + 1);
-      if (+el.dataset.endticks % 20 === 0) refresh = true;
+      if (+el.dataset.endticks % 2 === 0) refresh = true;
       continue;
     }
     const curEnd = start + (Math.min(cur, weeks - 1) + 1) * period;
