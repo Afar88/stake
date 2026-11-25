@@ -14,19 +14,22 @@
     --red2: #ba181b;
     --ink: #d7dce8;
     --dim: #8a93ad;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   }
   * { box-sizing: border-box; }
   body {
     margin: 0;
     background: var(--navy);
     color: var(--ink);
-    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-family: var(--sans);
     font-size: 16px;
     line-height: 1.5;
   }
   main { max-width: 560px; margin: 0 auto; padding: 20px 14px 80px; }
-  h1 { font-size: 28px; margin: 8px 0 2px; color: var(--red); letter-spacing: 1px; }
-  h2 { font-size: 18px; color: var(--red); margin: 30px 0 10px; border-bottom: 1px solid var(--navy3); padding-bottom: 6px; }
+  h1, h2, h3 { font-family: var(--sans); font-weight: 800; }
+  h1 { font-size: 32px; margin: 10px 0 2px; color: var(--red); letter-spacing: 2px; }
+  h2 { font-size: 19px; color: var(--red); margin: 34px 0 10px; border-bottom: 1px solid var(--navy3); padding-bottom: 6px; letter-spacing: 0.4px; }
   a { color: var(--red); }
   .banner {
     background: var(--red2);
@@ -38,9 +41,10 @@
   .card {
     background: var(--navy2);
     border: 1px solid var(--navy3);
-    border-radius: 10px;
-    padding: 16px;
+    border-radius: 18px;
+    padding: 18px;
     margin: 12px 0;
+    box-shadow: 0 10px 26px rgba(0, 0, 0, 0.38);
   }
   button {
     display: block;
@@ -48,52 +52,37 @@
     background: var(--red);
     color: #f4e9e9;
     border: 0;
-    border-radius: 8px;
+    border-radius: 12px;
     padding: 14px 18px;
-    font: inherit;
-    font-weight: bold;
+    font-family: var(--sans);
+    font-weight: 700;
     font-size: 16px;
     cursor: pointer;
     margin-top: 10px;
+    min-height: 48px;
   }
   button:disabled { background: var(--navy3); color: var(--dim); cursor: default; }
   button.ghost { background: transparent; border: 1px solid var(--red); color: var(--red); }
-  .periodrow { display: flex; gap: 8px; }
-  .periodbtn { flex: 1; padding: 12px 4px; font-size: 16px; line-height: 1.2; background: var(--navy); border: 2px solid var(--dim); color: var(--dim); border-radius: 10px; }
-  .periodbtn small { font-size: 12px; }
+  .periodrow { display: flex; gap: 8px; flex-wrap: wrap; }
+  .periodbtn { flex: 1 1 60px; padding: 12px 4px; font-size: 16px; line-height: 1.2; background: var(--navy); border: 2px solid var(--dim); color: var(--dim); border-radius: 10px; min-height: 0; margin-top: 6px; }
   .periodbtn.on { border-color: var(--red); color: #fff; background: var(--navy2); }
   input, select {
     width: 100%;
     background: var(--navy);
     border: 1px solid var(--navy3);
     color: var(--ink);
-    border-radius: 8px;
+    border-radius: 10px;
     padding: 12px;
-    font: inherit;
+    font-family: var(--mono);
     font-size: 16px;
     margin: 4px 0 4px;
   }
-  label { font-size: 13px; color: var(--ink); display: block; margin-top: 12px; }
+  label { font-size: 13px; color: var(--ink); display: block; margin-top: 12px; font-weight: 600; }
   .help { font-size: 12px; color: var(--dim); margin: 0 0 6px; }
   .row { display: flex; gap: 10px; flex-wrap: wrap; }
   .row > div { flex: 1; min-width: 100px; }
-  .weeks { display: flex; gap: 6px; flex-wrap: wrap; margin: 10px 0; }
-  .week {
-    width: 44px; height: 44px;
-    border-radius: 8px;
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    font-size: 13px; font-weight: bold;
-    border: 1px solid var(--navy3);
-    background: var(--navy3);
-    color: var(--dim);
-    line-height: 1.1;
-  }
-  .week small { font-size: 9px; font-weight: normal; }
-  .week.confirmed { color: var(--ink); border-color: var(--ink); }
-  .week.forfeited { background: var(--red2); color: #f4e9e9; border-color: var(--red2); }
-  .week.running { background: var(--red); color: #f4e9e9; border-color: var(--red); animation: pulse 1.5s infinite; }
-  @keyframes pulse { 50% { opacity: 0.55; } }
   .muted { color: var(--dim); font-size: 13px; }
+  .mono, .cd, .receipt, .receipt * { font-family: var(--mono); }
   .mono { word-break: break-all; font-size: 12.5px; }
   table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
   td, th { text-align: left; padding: 5px 8px 5px 0; vertical-align: top; border-bottom: 1px solid var(--navy3); }
@@ -102,6 +91,104 @@
   .status-line a { color: var(--red); }
   .goalhead { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 6px; }
   .cd { font-size: 13px; }
+
+  /* sample strip */
+  .sample { padding: 14px 18px 16px; }
+  .sample-label { font-size: 11px; letter-spacing: 2px; color: var(--dim); text-transform: uppercase; margin-bottom: 8px; }
+  .sstep {
+    display: flex; align-items: center; gap: 10px;
+    padding: 7px 0;
+    color: var(--dim);
+    font-size: 14.5px;
+    transition: color 0.5s;
+  }
+  .sstep .dot {
+    width: 12px; height: 12px; border-radius: 50%;
+    border: 2px solid var(--dim);
+    flex: none;
+    transition: all 0.5s;
+  }
+  .sstep.on { color: var(--ink); }
+  .sstep.on .dot {
+    border-color: var(--red);
+    background: var(--red);
+    box-shadow: 0 0 10px var(--red);
+  }
+  .sstep .sub { font-size: 12px; color: var(--dim); margin-left: auto; font-family: var(--mono); }
+  @media (prefers-reduced-motion: reduce) {
+    .sstep { color: var(--ink); transition: none; }
+    .sstep .dot { border-color: var(--red); background: var(--red); transition: none; box-shadow: none; }
+  }
+
+  /* how it works strip */
+  .howstrip { display: flex; flex-direction: column; gap: 0; }
+  .howstep { display: flex; gap: 12px; align-items: flex-start; padding: 8px 0; }
+  .howstep .n {
+    width: 26px; height: 26px; border-radius: 50%;
+    background: var(--navy3); color: var(--red);
+    font-family: var(--mono); font-weight: bold; font-size: 13px;
+    display: flex; align-items: center; justify-content: center; flex: none;
+  }
+  .howstep .t { font-size: 14.5px; }
+  .howstep .t small { display: block; color: var(--dim); font-size: 12px; }
+
+  /* action steps */
+  .steps { margin: 10px 0 0; }
+  .step {
+    display: flex; align-items: center; gap: 9px;
+    font-size: 13.5px; color: var(--dim);
+    padding: 3px 0;
+    transition: color 0.3s;
+  }
+  .step .sdot {
+    width: 16px; height: 16px; border-radius: 50%;
+    border: 2px solid var(--navy3);
+    flex: none; display: flex; align-items: center; justify-content: center;
+    font-size: 10px; color: transparent;
+    transition: all 0.3s;
+  }
+  .step.active { color: var(--ink); }
+  .step.active .sdot { border-color: var(--red); animation: pulse 1.4s infinite; }
+  .step.done { color: var(--ink); }
+  .step.done .sdot { border-color: var(--red); background: var(--red); color: #f4e9e9; }
+  @keyframes pulse { 50% { opacity: 0.45; } }
+  @media (prefers-reduced-motion: reduce) {
+    .step.active .sdot, .week.running { animation: none; }
+  }
+
+  /* receipt lines */
+  .receipt {
+    display: flex; flex-wrap: wrap; gap: 4px 10px;
+    font-size: 11.5px; color: var(--dim);
+    border-top: 1px solid var(--navy3);
+    padding: 6px 0 2px;
+    margin-top: 6px;
+  }
+  .receipt .rc-chain { color: var(--red); }
+  .receipt a { color: var(--dim); text-decoration: underline; }
+
+  /* week timeline */
+  .weeks { display: flex; gap: 6px; flex-wrap: wrap; margin: 10px 0; }
+  .week {
+    width: 46px; height: 46px;
+    border-radius: 12px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: bold;
+    border: 1px solid var(--navy3);
+    background: var(--navy3);
+    color: var(--dim);
+    line-height: 1.1;
+    font-family: var(--mono);
+  }
+  .week small { font-size: 9px; font-weight: normal; font-family: var(--sans); }
+  .week.confirmed { color: var(--ink); border-color: var(--ink); }
+  .week.forfeited { background: var(--red2); color: #f4e9e9; border-color: var(--red2); }
+  .week.running { background: var(--red); color: #f4e9e9; border-color: var(--red); animation: pulse 1.5s infinite; }
+
+  .older-toggle { margin: 8px 0; }
+  #oldergoals { display: none; }
+  .goaltext { color: var(--ink); font-size: 16px; font-weight: 600; margin-bottom: 6px; }
+  .endstate { font-weight: 700; font-size: 14px; margin-top: 8px; color: var(--ink); }
 </style>
 </head>
 <body>
@@ -111,15 +198,36 @@
   <p class="muted">Lock ETH on a weekly goal. A friend confirms each week. Miss a week, lose that week's slice.
   Finish the goal, get the rest back. No bot, no server — a Reactive Network contract does the chasing.</p>
 
+  <div class="card sample">
+    <div class="sample-label">Sample</div>
+    <div id="sampleflow">
+      <div class="sstep"><span class="dot"></span>Lock stake<span class="sub">0.001 ETH</span></div>
+      <div class="sstep"><span class="dot"></span>Week 1 confirmed<span class="sub">referee ✓</span></div>
+      <div class="sstep"><span class="dot"></span>Week 2 missed<span class="sub">no confirm</span></div>
+      <div class="sstep"><span class="dot"></span>Half sent to penalty wallet<span class="sub">automatic</span></div>
+      <div class="sstep"><span class="dot"></span>Rest returned to owner<span class="sub">automatic</span></div>
+    </div>
+  </div>
+
   <div class="card">
-    <div id="acct" class="muted">Wallet not connected</div>
+    <div id="acct" class="muted mono">Wallet not connected</div>
     <div id="net" class="muted" style="font-size:12px"></div>
     <button id="connect">Connect wallet</button>
     <button id="switchnet" class="ghost" style="display:none">Switch to Base Sepolia</button>
     <div class="status-line" id="netwarn"></div>
   </div>
 
-  <h2>New goal</h2>
+  <button id="makegoal" class="ghost" style="font-size:17px">Make a goal</button>
+
+  <h2>How it works</h2>
+  <div class="card howstrip">
+    <div class="howstep"><span class="n">1</span><div class="t">Your goal on Base Sepolia<small>Stake locks in the vault, split into weekly slices.</small></div></div>
+    <div class="howstep"><span class="n">2</span><div class="t">Reactive watcher on Lasna<small>It mirrors every goal and check-in, chain to chain.</small></div></div>
+    <div class="howstep"><span class="n">3</span><div class="t">Cron tick<small>The network itself wakes the watcher when a week ends.</small></div></div>
+    <div class="howstep"><span class="n">4</span><div class="t">Callback settles the week<small>Confirmed slice carries on; missed slice goes to penalty. Automatic — no one has to press anything.</small></div></div>
+  </div>
+
+  <h2 id="newgoal">New goal</h2>
   <div class="card">
     <label>Goal</label>
     <input id="f-goal" placeholder="Run 3 times a week" spellcheck="false" maxlength="140">
@@ -162,12 +270,16 @@
     <input id="f-stake" type="number" step="0.0001" min="0" value="0.001" inputmode="decimal">
     <p class="help">Split into equal slices, one per week.</p>
     <button id="create">Lock stake</button>
+    <div class="steps" id="createsteps" style="display:none"></div>
+    <div id="createreceipt"></div>
     <div class="status-line" id="createmsg"></div>
   </div>
 
   <h2>Your goals</h2>
   <div class="muted" style="margin-bottom:6px">Goals where you are the owner or the referee. <a href="#" id="refresh">refresh</a></div>
   <div id="goals"><div class="muted">Connect a wallet first.</div></div>
+  <div class="older-toggle" id="oldertoggle" style="display:none"><a href="#" id="showolder">Show older goals</a></div>
+  <div id="oldergoals"></div>
 
   <h2>Contracts</h2>
   <div class="card mono">
@@ -182,7 +294,7 @@
     <p class="muted" style="margin-top:0">Every goal, check-in, forfeit and release on the vault — read directly from the chain
     and updated by itself as new transactions land. No database, no server.</p>
     <table id="proof">
-      <tr><th>Event</th><th>When</th><th>Tx</th></tr>
+      <tr><th>Event</th><th>Chain</th><th>Tx</th></tr>
     </table>
     <p class="muted" id="proofstatus" style="margin-bottom:0">Reading the chain…</p>
   </div>
@@ -195,6 +307,7 @@
 const VAULT = "0xA7Ba5589A4bB572d6Aa19EECd0F20cf236A1Cb30";
 const CHAIN_ID = 84532;
 const BASESCAN = "https://sepolia.basescan.org/tx/";
+const BLOCKSCOUT = "https://base-sepolia.blockscout.com/tx/";
 const REACTSCAN = "https://lasna.reactscan.net/tx/";
 
 const VAULT_ABI = [
@@ -207,38 +320,104 @@ const VAULT_ABI = [
 ];
 
 const READ_RPC = "https://base-sepolia-rpc.publicnode.com";
-const EV_NAMES = {
-  "0x8a7f03fed9c9090a2c6c5c26d94e408b1fb0a4852e67323703424212fad03474": "Goal created",
-  "0xace05157c2c2e541f757661832e461481f06aec5918b9ddecb33a8bd4a32da63": "Checked in",
-  "0x1b1ae4e81ca3c511bc7d341fa83040a8179f1b37ff7f336d1e27e655567d87d5": "Forfeited",
-  "0xd5840651550c173a8bf246eede440a59253bc61eadb2e8887168faad2fad631d": "Released",
+const EV = {
+  created: "0x8a7f03fed9c9090a2c6c5c26d94e408b1fb0a4852e67323703424212fad03474",
+  checkedin: "0xace05157c2c2e541f757661832e461481f06aec5918b9ddecb33a8bd4a32da63",
+  forfeited: "0x1b1ae4e81ca3c511bc7d341fa83040a8179f1b37ff7f336d1e27e655567d87d5",
+  released: "0xd5840651550c173a8bf246eede440a59253bc61eadb2e8887168faad2fad631d",
 };
+const EV_NAMES = {
+  [EV.created]: "Goal created",
+  [EV.checkedin]: "Checked in",
+  [EV.forfeited]: "Forfeited",
+  [EV.released]: "Released",
+};
+const LEGACY_CUTOFF = 3; // goals below this id collapse under "Show older goals"
 
 let provider, signer, account;
+let evIndex = {}; // goalId -> decoded events, refreshed with the proof scan
 
 const $ = id => document.getElementById(id);
 const short = a => a.slice(0, 6) + "…" + a.slice(-4);
+const esc = s => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
 function fmtWhen(ts) {
   const d = new Date(ts * 1000);
   return d.toLocaleString(undefined, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
 }
 
+/* ---------- sample strip: self-playing ---------- */
+(function sample() {
+  const steps = document.querySelectorAll("#sampleflow .sstep");
+  if (!steps.length) return;
+  if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    steps.forEach(s => s.classList.add("on"));
+    return;
+  }
+  let i = 0;
+  const tick = () => {
+    steps.forEach((s, j) => s.classList.toggle("on", j <= i));
+    i = (i + 1) % (steps.length + 2); // brief pause with all lit, then restart
+  };
+  tick();
+  setInterval(tick, 1700);
+})();
+
+/* ---------- receipt lines ---------- */
+function receiptEl({ chain, hash, time, amount, caption }) {
+  const d = document.createElement("div");
+  d.className = "receipt";
+  let inner = "";
+  if (caption) inner += `<span style="color:var(--ink)">${caption}</span>`;
+  if (chain) inner += `<span class="rc-chain">${chain}</span>`;
+  if (hash) inner += `<a class="mono" href="${BLOCKSCOUT}${hash}" target="_blank" rel="noopener">${hash.slice(0, 8)}…${hash.slice(-6)}</a>`;
+  if (time) inner += `<span>${time}</span>`;
+  if (amount) inner += `<span class="mono">${amount}</span>`;
+  d.innerHTML = inner;
+  return d;
+}
+
+/* ---------- action steps ---------- */
+function stepsEl(container, labels) {
+  container.innerHTML = "";
+  container.style.display = "block";
+  const rows = labels.map(l => {
+    const r = document.createElement("div");
+    r.className = "step";
+    r.innerHTML = `<span class="sdot">✓</span>${l}`;
+    container.appendChild(r);
+    return r;
+  });
+  return {
+    active(i) { rows.forEach((r, j) => { r.classList.toggle("done", j < i); r.classList.toggle("active", j === i); }); },
+    done() { rows.forEach(r => { r.classList.add("done"); r.classList.remove("active"); }); },
+    clear() { container.innerHTML = ""; container.style.display = "none"; },
+  };
+}
+
+/* ---------- live chain scan (shared by proof + receipts) ---------- */
+async function scanEvents(rp) {
+  const latest = await rp.getBlockNumber();
+  const topicList = Object.values(EV);
+  const CHUNK = 44000;
+  let logs = [];
+  for (let i = 0; i < 3; i++) {
+    const to = latest - i * CHUNK;
+    if (to < 0) break;
+    const from = Math.max(to - CHUNK + 1, 0);
+    logs = logs.concat(await rp.getLogs({ address: VAULT, fromBlock: from, toBlock: to, topics: [topicList] }));
+  }
+  logs.sort((a, b) => a.blockNumber - b.blockNumber || a.index - b.index);
+  return logs;
+}
+
+function u256(hex32) { return BigInt("0x" + hex32); }
+
 async function loadProof() {
   const status = $("proofstatus");
   try {
     const rp = new ethers.JsonRpcProvider(READ_RPC);
-    const latest = await rp.getBlockNumber();
-    const topicList = Object.keys(EV_NAMES);
-    const CHUNK = 44000;
-    let logs = [];
-    for (let i = 0; i < 3; i++) {
-      const to = latest - i * CHUNK;
-      if (to < 0) break;
-      const from = Math.max(to - CHUNK + 1, 0);
-      logs = logs.concat(await rp.getLogs({ address: VAULT, fromBlock: from, toBlock: to, topics: [topicList] }));
-    }
-    logs.sort((a, b) => a.blockNumber - b.blockNumber || a.index - b.index);
+    const logs = await scanEvents(rp);
     const texts = {};
     const goals = [...new Set(logs.map(l => Number(BigInt(l.topics[1]))))];
     const vaultRead = new ethers.Contract(VAULT, VAULT_ABI, rp);
@@ -249,21 +428,45 @@ async function loadProof() {
     await Promise.all([...new Set(logs.map(l => l.blockNumber))].map(async bn => {
       try { blockTimes[bn] = (await rp.getBlock(bn)).timestamp; } catch (e) { blockTimes[bn] = 0; }
     }));
+
+    // index events per goal for receipts: week -> {type, hash, time, amount}
+    evIndex = {};
+    for (const l of logs) {
+      const g = Number(BigInt(l.topics[1]));
+      const t0 = l.topics[0];
+      evIndex[g] = evIndex[g] || { weeks: {}, release: null, create: null };
+      const data = l.data.slice(2);
+      const ts = blockTimes[l.blockNumber] || 0;
+      if (t0 === EV.created) {
+        evIndex[g].create = { hash: l.transactionHash, time: ts };
+      } else if (t0 === EV.checkedin) {
+        const week = Number(u256(data.slice(0, 64)));
+        evIndex[g].weeks[week] = { type: "checkedin", hash: l.transactionHash, time: ts };
+      } else if (t0 === EV.forfeited) {
+        const week = Number(u256(data.slice(0, 64)));
+        const amount = u256(data.slice(64, 128));
+        evIndex[g].weeks[week] = { type: "forfeited", hash: l.transactionHash, time: ts, amount };
+      } else if (t0 === EV.released) {
+        const amount = u256(data.slice(0, 64));
+        evIndex[g].release = { hash: l.transactionHash, time: ts, amount };
+      }
+    }
+
     const table = $("proof");
-    table.innerHTML = `<tr><th>Event</th><th>When</th><th>Tx</th></tr>`;
+    table.innerHTML = `<tr><th>Event</th><th>Chain</th><th>Tx</th></tr>`;
     let lastGoal = null;
     for (const l of logs) {
       const g = Number(BigInt(l.topics[1]));
       if (g !== lastGoal) {
         lastGoal = g;
         const tr = document.createElement("tr");
-        const t = (texts[g] || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        const t = esc(texts[g] || "");
         tr.innerHTML = `<td colspan="3" style="padding-top:10px"><b>Goal #${g}</b>${t ? ` — “${t}”` : ""}</td>`;
         table.appendChild(tr);
       }
       const tr = document.createElement("tr");
       const when = blockTimes[l.blockNumber] ? fmtWhen(blockTimes[l.blockNumber]) : "";
-      tr.innerHTML = `<td>${EV_NAMES[l.topics[0]] || "Event"}</td><td>${when}</td><td class="mono"><a href="${BASESCAN}${l.transactionHash}" target="_blank" rel="noopener">${l.transactionHash.slice(0, 14)}…</a></td>`;
+      tr.innerHTML = `<td>${EV_NAMES[l.topics[0]] || "Event"}<br><span class="muted" style="font-size:11px">${when}</span></td><td>Base Sepolia</td><td class="mono"><a href="${BASESCAN}${l.transactionHash}" target="_blank" rel="noopener">${l.transactionHash.slice(0, 12)}…</a></td>`;
       table.appendChild(tr);
     }
     status.textContent = logs.length ? `${logs.length} events across ${goals.length} goals — updates live` : "No events found yet.";
@@ -352,8 +555,11 @@ async function onSwitchNet() {
 
 function fmtLeft(sec) {
   if (sec <= 0) return "ended";
-  const m = Math.floor(sec / 60), s = Math.floor(sec % 60);
-  return m > 0 ? `${m}m ${s}s left` : `${s}s left`;
+  const d = Math.floor(sec / 86400), h = Math.floor((sec % 86400) / 3600), m = Math.floor((sec % 3600) / 60), ss = Math.floor(sec % 60);
+  if (d > 0) return `${d}d ${h}h left`;
+  if (h > 0) return `${h}h ${m}m left`;
+  if (m > 0) return `${m}m ${ss}s left`;
+  return `${ss}s left`;
 }
 
 async function loadGoals() {
@@ -375,9 +581,20 @@ async function loadGoals() {
     }
     if (!mine.length) { el.innerHTML = '<div class="card muted">No goals yet. Lock your first stake above.</div>'; return; }
     el.innerHTML = "";
+    $("oldergoals").innerHTML = "";
+    let olderCount = 0;
     const now = Math.floor(Date.now() / 1000);
     for (const [id, g, text] of mine.reverse()) {
-      el.appendChild(renderGoal(id, g, now, text));
+      const card = renderGoal(id, g, now, text);
+      if (id < LEGACY_CUTOFF) { $("oldergoals").appendChild(card); olderCount++; }
+      else el.appendChild(card);
+    }
+    const toggle = $("oldertoggle");
+    if (olderCount) {
+      toggle.style.display = "block";
+      $("showolder").textContent = `Show older goals (${olderCount})`;
+    } else {
+      toggle.style.display = "none";
     }
   } catch (e) {
     el.innerHTML = '<div class="card muted">Could not read goals — wrong network?</div>';
@@ -392,14 +609,15 @@ function renderGoal(id, g, now, text) {
   const start = Number(g.startTime);
   const cur = Math.floor((now - start) / period);
   const slice = g.stake / BigInt(weeks);
+  const evs = evIndex[id] || { weeks: {}, release: null, create: null };
 
   let boxes = "";
   for (let p = 0; p < weeks; p++) {
     const confirmed = (Number(g.confirmedMask) >> p) & 1;
     const settled = (Number(g.settledMask) >> p) & 1;
-    let cls = "week", label = p + 1, sub = "upcoming";
+    let cls = "week", label = p + 1, sub = "waiting";
     if (settled) { cls += " forfeited"; label = "✗"; sub = "missed"; }
-    else if (confirmed) { cls += " confirmed"; label = "✓"; sub = "done"; }
+    else if (confirmed) { cls += " confirmed"; label = "✓"; sub = "confirmed"; }
     else if (g.active && p === cur) { cls += " running"; sub = "now"; }
     boxes += `<div class="${cls}" title="week ${p + 1}"><span>${label}</span><small>${sub}</small></div>`;
   }
@@ -408,44 +626,85 @@ function renderGoal(id, g, now, text) {
   const curEnd = start + (Math.min(cur, weeks - 1) + 1) * period;
   const isOwner = g.owner.toLowerCase() === account.toLowerCase();
   const role = isOwner ? "owner" : "referee";
-  const state = !g.active ? "finished — stake returned" : ended ? "last week ended — settling" : `week ${Math.min(cur + 1, weeks)} of ${weeks} — ${fmtLeft(curEnd - now)}`;
+  const endState = !g.active && g.forfeited > 0n
+    ? `Finished — ${ethers.formatEther(g.forfeited)} ETH went to penalty, rest returned`
+    : !g.active ? "Finished — stake returned"
+    : null;
+  const state = endState ? "finished" : (ended ? "last week ended — settling" : `week ${Math.min(cur + 1, weeks)} of ${weeks} — ${fmtLeft(curEnd - now)}`);
 
   card.innerHTML = `
-    ${text ? `<div style="color:var(--ink);font-size:15px;margin-bottom:6px">“${text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")}”</div>` : ""}
+    ${text ? `<div class="goaltext">“${esc(text)}”</div>` : ""}
     <div class="goalhead">
       <b>Goal #${id}</b>
       <span class="muted cd" data-start="${start}" data-period="${period}" data-weeks="${weeks}" data-active="${g.active ? 1 : 0}">${state}</span>
     </div>
     <div class="weeks">${boxes}</div>
     <div class="muted">
-      stake ${ethers.formatEther(g.stake)} ETH · slice ${ethers.formatEther(slice)} ETH ·
-      forfeited so far ${ethers.formatEther(g.forfeited)} ETH · you are the ${role}<br>
-      referee <span class="mono">${short(g.referee)}</span> · penalty to <span class="mono">${short(g.penaltyTo)}</span>
+      stake <span class="mono">${ethers.formatEther(g.stake)} ETH</span> · referee <span class="mono">${short(g.referee)}</span> · you are the ${role}
     </div>
+    ${endState ? `<div class="endstate">${endState}</div>` : ""}
   `;
+
+  // receipts for settled/confirmed weeks + create + release
+  if (evs.create) {
+    card.appendChild(receiptEl({ caption: "stake locked", chain: "Base Sepolia", hash: evs.create.hash, time: evs.create.time ? fmtWhen(evs.create.time) : null, amount: ethers.formatEther(g.stake) + " ETH locked" }));
+  }
+  for (let p = 0; p < weeks; p++) {
+    const w = evs.weeks[p];
+    if (!w) continue;
+    const label = w.type === "forfeited" ? `week ${p + 1} missed` : `week ${p + 1} confirmed`;
+    const r = receiptEl({
+      caption: label,
+      chain: "Base Sepolia",
+      hash: w.hash,
+      time: w.time ? fmtWhen(w.time) : null,
+      amount: w.type === "forfeited" && w.amount ? ethers.formatEther(w.amount) + " ETH to penalty" : null,
+    });
+    card.appendChild(r);
+  }
+  if (evs.release) {
+    card.appendChild(receiptEl({
+      caption: "stake returned",
+      chain: "Base Sepolia",
+      hash: evs.release.hash,
+      time: evs.release.time ? fmtWhen(evs.release.time) : null,
+      amount: evs.release.amount ? ethers.formatEther(evs.release.amount) + " ETH" : null,
+    }));
+  }
 
   const already = cur < weeks && ((Number(g.confirmedMask) >> cur) & 1);
   if (g.active && g.referee.toLowerCase() === account.toLowerCase() && cur < weeks && !already && !ended) {
     const btn = document.createElement("button");
     btn.textContent = `Confirm this week (week ${cur + 1})`;
+    const stepsC = document.createElement("div");
+    stepsC.className = "steps";
+    stepsC.style.display = "none";
+    const rline = document.createElement("div");
     const line = document.createElement("div");
     line.className = "status-line";
     btn.onclick = async () => {
       btn.disabled = true;
-      line.textContent = "Pending in wallet…";
+      const st = stepsEl(stepsC, ["Confirm in wallet", "Sent", "Confirmed on Base Sepolia"]);
+      line.textContent = "";
       try {
+        st.active(0);
         const vault = new ethers.Contract(VAULT, VAULT_ABI, signer);
         const tx = await vault.confirm(id);
-        line.textContent = "Sent — waiting for the block…";
+        st.active(1);
         await tx.wait();
-        line.innerHTML = `Done — <a href="${BASESCAN}${tx.hash}" target="_blank" rel="noopener">view transaction</a>`;
+        st.done();
+        rline.innerHTML = "";
+        rline.appendChild(receiptEl({ chain: "Base Sepolia", hash: tx.hash, time: fmtWhen(Math.floor(Date.now() / 1000)) }));
         setTimeout(loadGoals, 1500);
       } catch (e) {
+        st.clear();
         btn.disabled = false;
         line.textContent = plainError(e);
       }
     };
     card.appendChild(btn);
+    card.appendChild(stepsC);
+    card.appendChild(rline);
     card.appendChild(line);
   }
   return card;
@@ -454,6 +713,14 @@ function renderGoal(id, g, now, text) {
 $("connect").onclick = connect;
 $("switchnet").onclick = onSwitchNet;
 $("refresh").onclick = (e) => { e.preventDefault(); loadGoals(); };
+$("makegoal").onclick = () => { document.getElementById("newgoal").scrollIntoView({ behavior: "smooth" }); $("f-goal").focus(); };
+$("showolder").onclick = (e) => {
+  e.preventDefault();
+  const og = $("oldergoals");
+  const open = og.style.display === "block";
+  og.style.display = open ? "none" : "block";
+  $("showolder").textContent = open ? `Show older goals (${og.childElementCount})` : "Hide older goals";
+};
 
 setInterval(() => {
   const now = Math.floor(Date.now() / 1000);
@@ -482,6 +749,7 @@ $("create").onclick = async () => {
   const msg = $("createmsg");
   msg.textContent = "";
   if (!signer) { msg.textContent = "Connect a wallet first."; return; }
+  const st = stepsEl($("createsteps"), ["Confirm in wallet", "Sent", "Confirmed on Base Sepolia", "Reactive watching"]);
   try {
     const goalText = $("f-goal").value.trim();
     if (!goalText) throw new Error("Write the goal in a few words first.");
@@ -495,13 +763,22 @@ $("create").onclick = async () => {
     if (stake <= 0n) throw new Error("Stake must be above zero.");
     const vault = new ethers.Contract(VAULT, VAULT_ABI, signer);
     $("create").disabled = true;
-    msg.textContent = "Pending in wallet…";
+    st.active(0);
     const tx = await vault.createGoal(goalText, referee, penalty, weeks, period, { value: stake });
-    msg.textContent = "Sent — waiting for the block…";
+    st.active(1);
     await tx.wait();
-    msg.innerHTML = `Done — goal created. <a href="${BASESCAN}${tx.hash}" target="_blank" rel="noopener">view transaction</a>`;
+    st.active(2);
+    setTimeout(() => st.done(), 2500);
+    $("createreceipt").innerHTML = "";
+    $("createreceipt").appendChild(receiptEl({
+      chain: "Base Sepolia",
+      hash: tx.hash,
+      time: fmtWhen(Math.floor(Date.now() / 1000)),
+      amount: ethers.formatEther(stake) + " ETH",
+    }));
     setTimeout(loadGoals, 1500);
   } catch (e) {
+    st.clear();
     msg.textContent = plainError(e);
   } finally {
     $("create").disabled = false;
