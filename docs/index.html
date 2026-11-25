@@ -58,6 +58,10 @@
   }
   button:disabled { background: var(--navy3); color: var(--dim); cursor: default; }
   button.ghost { background: transparent; border: 1px solid var(--red); color: var(--red); }
+  .periodrow { display: flex; gap: 8px; }
+  .periodbtn { flex: 1; padding: 12px 4px; font-size: 16px; line-height: 1.2; background: var(--navy); border: 2px solid var(--dim); color: var(--dim); border-radius: 10px; }
+  .periodbtn small { font-size: 12px; }
+  .periodbtn.on { border-color: var(--red); color: #fff; background: var(--navy2); }
   input, select {
     width: 100%;
     background: var(--navy);
@@ -134,11 +138,12 @@
       </div>
       <div>
         <label>Period length</label>
-        <select id="f-period">
-          <option value="600">10 minutes (demo)</option>
-          <option value="604800" selected>1 week</option>
-        </select>
-        <p class="help">Demo uses short 10-minute “weeks”.</p>
+        <input type="hidden" id="f-period" value="600">
+        <div class="periodrow">
+          <button type="button" class="periodbtn on" data-v="600" id="pb-600">10 min<br><small>demo</small></button>
+          <button type="button" class="periodbtn" data-v="604800" id="pb-604800">7 days<br><small>real week</small></button>
+        </div>
+        <p class="help">Pick 10 min to try it, 7 days for real.</p>
       </div>
     </div>
     <label>Stake (ETH)</label>
@@ -428,6 +433,14 @@ $("create").onclick = async () => {
     $("create").disabled = false;
   }
 };
+
+document.querySelectorAll(".periodbtn").forEach(b => {
+  b.onclick = () => {
+    document.querySelectorAll(".periodbtn").forEach(x => x.classList.remove("on"));
+    b.classList.add("on");
+    $("f-period").value = b.dataset.v;
+  };
+});
 
 if (window.ethereum) {
   window.ethereum.on("accountsChanged", () => location.reload());
