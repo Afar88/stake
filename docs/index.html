@@ -117,6 +117,9 @@
 
   <h2>New goal</h2>
   <div class="card">
+    <label>Goal</label>
+    <input id="f-goal" placeholder="Run 3 times a week" spellcheck="false" maxlength="140">
+    <p class="help">What your referee checks each week.</p>
     <label>Referee</label>
     <input id="f-referee" placeholder="0x…" spellcheck="false" inputmode="text" autocomplete="off">
     <p class="help">The friend's wallet that confirms each week.</p>
@@ -177,7 +180,8 @@ const BASESCAN = "https://sepolia.basescan.org/tx/";
 const REACTSCAN = "https://lasna.reactscan.net/tx/";
 
 const VAULT_ABI = [
-  "function createGoal(address referee, address penaltyTo, uint8 weeks, uint64 periodSeconds) payable returns (uint256)",
+  "function createGoal(string goal, address referee, address penaltyTo, uint8 weeks, uint64 periodSeconds) payable returns (uint256)",
+  "function goalText(uint256) view returns (string)",
   "function confirm(uint256 goalId)",
   "function goalCount() view returns (uint256)",
   "function goals(uint256) view returns (address owner, address referee, address penaltyTo, uint256 stake, uint256 forfeited, uint8 numWeeks, uint64 periodSeconds, uint64 startTime, uint16 confirmedMask, uint16 settledMask, bool active)",
@@ -295,20 +299,24 @@ async function loadGoals() {
     const mine = [];
     for (let i = 0; i < count; i++) {
       const g = await vault.goals(i);
-      if (g.owner.toLowerCase() === me || g.referee.toLowerCase() === me) mine.push([i, g]);
+      if (g.owner.toLowerCase() === me || g.referee.toLowerCase() === me) {
+        let text = "";
+        try { text = await vault.goalText(i); } catch (e) {}
+        mine.push([i, g, text]);
+      }
     }
     if (!mine.length) { el.innerHTML = '<div class="card muted">No goals yet. Lock your first stake above.</div>'; return; }
     el.innerHTML = "";
     const now = Math.floor(Date.now() / 1000);
-    for (const [id, g] of mine.reverse()) {
-      el.appendChild(renderGoal(id, g, now));
+    for (const [id, g, text] of mine.reverse()) {
+      el.appendChild(renderGoal(id, g, now, text));
     }
   } catch (e) {
     el.innerHTML = '<div class="card muted">Could not read goals — wrong network?</div>';
   }
 }
 
-function renderGoal(id, g, now) {
+function renderGoal(id, g, now, text) {
   const card = document.createElement("div");
   card.className = "card";
   const weeks = Number(g.numWeeks);
@@ -335,6 +343,7 @@ function renderGoal(id, g, now) {
   const state = !g.active ? "finished — stake returned" : ended ? "last week ended — settling" : `week ${Math.min(cur + 1, weeks)} of ${weeks} — ${fmtLeft(curEnd - now)}`;
 
   card.innerHTML = `
+    ${text ? `<div style="color:var(--ink);font-size:15px;margin-bottom:6px">“${text.replace(/</g, "&lt;")}”</div>` : ""}
     <div class="goalhead">
       <b>Goal #${id}</b>
       <span class="muted cd" data-start="${start}" data-period="${period}" data-weeks="${weeks}" data-active="${g.active ? 1 : 0}">${state}</span>
@@ -395,6 +404,9 @@ $("create").onclick = async () => {
   msg.textContent = "";
   if (!signer) { msg.textContent = "Connect a wallet first."; return; }
   try {
+    const goalText = $("f-goal").value.trim();
+    if (!goalText) throw new Error("Write the goal in a few words first.");
+    if (new TextEncoder().encode(goalText).length > 140) throw new Error("Goal text must be 140 bytes or less.");
     const referee = ethers.getAddress($("f-referee").value.trim());
     const penalty = ethers.getAddress($("f-penalty").value.trim());
     const weeks = Number($("f-weeks").value);
@@ -405,7 +417,7 @@ $("create").onclick = async () => {
     const vault = new ethers.Contract(VAULT, VAULT_ABI, signer);
     $("create").disabled = true;
     msg.textContent = "Pending in wallet…";
-    const tx = await vault.createGoal(referee, penalty, weeks, period, { value: stake });
+    const tx = await vault.createGoal(goalText, referee, penalty, weeks, period, { value: stake });
     msg.textContent = "Sent — waiting for the block…";
     await tx.wait();
     msg.innerHTML = `Done — goal created. <a href="${BASESCAN}${tx.hash}" target="_blank" rel="noopener">view transaction</a>`;

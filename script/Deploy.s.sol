@@ -107,8 +107,9 @@ contract CreateDemoGoal is Script {
         uint256 stake = vm.envOr("GOAL_STAKE", uint256(0.02 ether));
 
         vm.startBroadcast();
+        string memory text = vm.envOr("GOAL_TEXT", string("Run 3 times a week"));
         goalId = StakeVault(payable(vaultAddr)).createGoal{ value: stake }(
-            referee, penaltyTo, numWeeks, periodSeconds
+            text, referee, penaltyTo, numWeeks, periodSeconds
         );
         vm.stopBroadcast();
         console.log("Goal:", goalId);
