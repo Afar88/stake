@@ -412,14 +412,20 @@ $("refresh").onclick = (e) => { e.preventDefault(); loadGoals(); };
 
 setInterval(() => {
   const now = Math.floor(Date.now() / 1000);
+  let refresh = false;
   for (const el of document.querySelectorAll(".cd")) {
     if (el.dataset.active !== "1") continue;
     const start = +el.dataset.start, period = +el.dataset.period, weeks = +el.dataset.weeks;
     const cur = Math.floor((now - start) / period);
-    if (now >= start + weeks * period) { el.textContent = "last week ended — settling"; continue; }
+    const ended = now >= start + weeks * period;
+    const wk = ended ? "end" : String(Math.min(cur + 1, weeks));
+    if (el.dataset.wk && el.dataset.wk !== wk) refresh = true;
+    el.dataset.wk = wk;
+    if (ended) { el.textContent = "last week ended — settling"; continue; }
     const curEnd = start + (Math.min(cur, weeks - 1) + 1) * period;
     el.textContent = `week ${Math.min(cur + 1, weeks)} of ${weeks} — ${fmtLeft(curEnd - now)}`;
   }
+  if (refresh) loadGoals();
 }, 1000);
 
 $("create").onclick = async () => {
