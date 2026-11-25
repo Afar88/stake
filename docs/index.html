@@ -561,10 +561,12 @@ function fmtLeft(sec) {
   return `${ss}s left`;
 }
 
+let goalsLoading = false;
 async function loadGoals() {
-  if (!signer) return;
+  if (!signer || goalsLoading) return;
+  goalsLoading = true;
   const el = $("goals");
-  el.innerHTML = '<div class="muted">Loading…</div>';
+  if (!el.children.length) el.innerHTML = '<div class="muted">Loading…</div>';
   try {
     const vault = new ethers.Contract(VAULT, VAULT_ABI, signer);
     const count = Number(await vault.goalCount());
@@ -579,24 +581,28 @@ async function loadGoals() {
       }
     }
     if (!mine.length) { el.innerHTML = '<div class="card muted">No goals yet. Lock your first stake above.</div>'; return; }
-    el.innerHTML = "";
-    $("oldergoals").innerHTML = "";
+    const fresh = document.createDocumentFragment();
+    const older = document.createDocumentFragment();
     let olderCount = 0;
     const now = Math.floor(Date.now() / 1000);
     for (const [id, g, text] of mine.reverse()) {
       const card = renderGoal(id, g, now, text);
-      if (id < LEGACY_CUTOFF) { $("oldergoals").appendChild(card); olderCount++; }
-      else el.appendChild(card);
+      if (id < LEGACY_CUTOFF) { older.appendChild(card); olderCount++; }
+      else fresh.appendChild(card);
     }
+    el.replaceChildren(fresh);
+    $("oldergoals").replaceChildren(older);
     const toggle = $("oldertoggle");
     if (olderCount) {
       toggle.style.display = "block";
-      $("showolder").textContent = `Show older goals (${olderCount})`;
+      $("showolder").textContent = $("oldergoals").style.display === "block" ? "Hide older goals" : `Show older goals (${olderCount})`;
     } else {
       toggle.style.display = "none";
     }
   } catch (e) {
     el.innerHTML = '<div class="card muted">Could not read goals — wrong network?</div>';
+  } finally {
+    goalsLoading = false;
   }
 }
 
@@ -735,7 +741,7 @@ setInterval(() => {
     if (ended) {
       el.textContent = "last week ended — settling (a few minutes)";
       el.dataset.endticks = String(+(el.dataset.endticks || 0) + 1);
-      if (+el.dataset.endticks % 2 === 0) refresh = true;
+      if (+el.dataset.endticks % 15 === 0) refresh = true;
       continue;
     }
     const curEnd = start + (Math.min(cur, weeks - 1) + 1) * period;
