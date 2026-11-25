@@ -284,7 +284,7 @@
   <h2>Contracts</h2>
   <div class="card mono">
     StakeVault (Base Sepolia) —
-    <a href="https://sepolia.basescan.org/address/0xA7Ba5589A4bB572d6Aa19EECd0F20cf236A1Cb30" target="_blank" rel="noopener">0xA7Ba5589A4bB572d6Aa19EECd0F20cf236A1Cb30</a><br>
+    <a href="https://base-sepolia.blockscout.com/address/0xA7Ba5589A4bB572d6Aa19EECd0F20cf236A1Cb30" target="_blank" rel="noopener">0xA7Ba5589A4bB572d6Aa19EECd0F20cf236A1Cb30</a><br>
     StakeWatcher (Reactive Lasna) —
     <a href="https://lasna.reactscan.net/address/0x49012E6b5C0441324B0fA7C78e616a4852ddeB0D" target="_blank" rel="noopener">0x49012E6b5C0441324B0fA7C78e616a4852ddeB0D</a>
   </div>
@@ -306,7 +306,6 @@
 <script>
 const VAULT = "0xA7Ba5589A4bB572d6Aa19EECd0F20cf236A1Cb30";
 const CHAIN_ID = 84532;
-const BASESCAN = "https://sepolia.basescan.org/tx/";
 const BLOCKSCOUT = "https://base-sepolia.blockscout.com/tx/";
 const REACTSCAN = "https://lasna.reactscan.net/tx/";
 
@@ -466,7 +465,7 @@ async function loadProof() {
       }
       const tr = document.createElement("tr");
       const when = blockTimes[l.blockNumber] ? fmtWhen(blockTimes[l.blockNumber]) : "";
-      tr.innerHTML = `<td>${EV_NAMES[l.topics[0]] || "Event"}<br><span class="muted" style="font-size:11px">${when}</span></td><td>Base Sepolia</td><td class="mono"><a href="${BASESCAN}${l.transactionHash}" target="_blank" rel="noopener">${l.transactionHash.slice(0, 12)}…</a></td>`;
+      tr.innerHTML = `<td>${EV_NAMES[l.topics[0]] || "Event"}<br><span class="muted" style="font-size:11px">${when}</span></td><td>Base Sepolia</td><td class="mono"><a href="${BLOCKSCOUT}${l.transactionHash}" target="_blank" rel="noopener">${l.transactionHash.slice(0, 12)}…</a></td>`;
       table.appendChild(tr);
     }
     status.textContent = logs.length ? `${logs.length} events across ${goals.length} goals — updates live` : "No events found yet.";
@@ -497,7 +496,7 @@ async function addAndSwitchNetwork() {
         chainName: "Base Sepolia",
         nativeCurrency: { name: "ETH", symbol: "ETH", decimals: 18 },
         rpcUrls: ["https://sepolia.base.org"],
-        blockExplorerUrls: ["https://sepolia.basescan.org"]
+        blockExplorerUrls: ["https://base-sepolia.blockscout.com"]
       }]});
     } else throw e;
   }
@@ -562,10 +561,12 @@ function fmtLeft(sec) {
   return `${ss}s left`;
 }
 
+let goalsLoading = false;
 async function loadGoals() {
-  if (!signer) return;
+  if (!signer || goalsLoading) return;
+  goalsLoading = true;
   const el = $("goals");
-  el.innerHTML = '<div class="muted">Loading…</div>';
+  if (!el.children.length) el.innerHTML = '<div class="muted">Loading…</div>';
   try {
     const vault = new ethers.Contract(VAULT, VAULT_ABI, signer);
     const count = Number(await vault.goalCount());
@@ -580,24 +581,28 @@ async function loadGoals() {
       }
     }
     if (!mine.length) { el.innerHTML = '<div class="card muted">No goals yet. Lock your first stake above.</div>'; return; }
-    el.innerHTML = "";
-    $("oldergoals").innerHTML = "";
+    const fresh = document.createDocumentFragment();
+    const older = document.createDocumentFragment();
     let olderCount = 0;
     const now = Math.floor(Date.now() / 1000);
     for (const [id, g, text] of mine.reverse()) {
       const card = renderGoal(id, g, now, text);
-      if (id < LEGACY_CUTOFF) { $("oldergoals").appendChild(card); olderCount++; }
-      else el.appendChild(card);
+      if (id < LEGACY_CUTOFF) { older.appendChild(card); olderCount++; }
+      else fresh.appendChild(card);
     }
+    el.replaceChildren(fresh);
+    $("oldergoals").replaceChildren(older);
     const toggle = $("oldertoggle");
     if (olderCount) {
       toggle.style.display = "block";
-      $("showolder").textContent = `Show older goals (${olderCount})`;
+      $("showolder").textContent = $("oldergoals").style.display === "block" ? "Hide older goals" : `Show older goals (${olderCount})`;
     } else {
       toggle.style.display = "none";
     }
   } catch (e) {
     el.innerHTML = '<div class="card muted">Could not read goals — wrong network?</div>';
+  } finally {
+    goalsLoading = false;
   }
 }
 
@@ -736,7 +741,7 @@ setInterval(() => {
     if (ended) {
       el.textContent = "last week ended — settling (a few minutes)";
       el.dataset.endticks = String(+(el.dataset.endticks || 0) + 1);
-      if (+el.dataset.endticks % 2 === 0) refresh = true;
+      if (+el.dataset.endticks % 15 === 0) refresh = true;
       continue;
     }
     const curEnd = start + (Math.min(cur, weeks - 1) + 1) * period;
