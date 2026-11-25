@@ -138,12 +138,15 @@
       </div>
       <div>
         <label>Period length</label>
-        <input type="hidden" id="f-period" value="600">
-        <div class="periodrow">
-          <button type="button" class="periodbtn on" data-v="600" id="pb-600">10 min<br><small>demo</small></button>
-          <button type="button" class="periodbtn" data-v="604800" id="pb-604800">7 days<br><small>real week</small></button>
-        </div>
-        <p class="help">Pick 10 min to try it, 7 days for real.</p>
+        <select id="f-period">
+          <option value="600" selected>10 minutes (demo)</option>
+          <option value="1200">20 minutes</option>
+          <option value="1800">30 minutes</option>
+          <option value="3600">1 hour</option>
+          <option value="86400">1 day</option>
+          <option value="604800">1 week</option>
+        </select>
+        <p class="help">Pick minutes to demo it, a week for real.</p>
       </div>
     </div>
     <label>Stake (ETH)</label>
@@ -439,14 +442,6 @@ $("create").onclick = async () => {
     $("create").disabled = false;
   }
 };
-
-document.querySelectorAll(".periodbtn").forEach(b => {
-  b.onclick = () => {
-    document.querySelectorAll(".periodbtn").forEach(x => x.classList.remove("on"));
-    b.classList.add("on");
-    $("f-period").value = b.dataset.v;
-  };
-});
 
 if (window.ethereum) {
   window.ethereum.on("accountsChanged", () => location.reload());
