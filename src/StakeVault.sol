@@ -24,6 +24,7 @@ contract StakeVault is AbstractCallback {
         uint64 periodSeconds,
         uint64 startTime
     );
+    event GoalText(uint256 indexed goalId, string text);
     event CheckedIn(uint256 indexed goalId, uint256 periodIndex);
     event Forfeited(uint256 indexed goalId, uint256 periodIndex, uint256 amount);
     event Released(uint256 indexed goalId, uint256 amount);
@@ -40,6 +41,7 @@ contract StakeVault is AbstractCallback {
     error BadWeeks();
     error BadPeriodSeconds();
     error NoStake();
+    error BadGoalText();
     error NotReferee();
     error GoalNotActive();
     error GoalFinished();
@@ -74,6 +76,8 @@ contract StakeVault is AbstractCallback {
 
     uint256 public goalCount;
     mapping(uint256 => Goal) public goals;
+    /// @notice The goal in words, as owner and referee agreed. 1–140 bytes, set at creation.
+    mapping(uint256 => string) public goalText;
 
     /// @param callbackProxy_ Callback proxy on Base Sepolia (the billing service provider).
     /// @param watcher_       StakeWatcher on Reactive Lasna allowed to drive callbacks.
@@ -85,15 +89,17 @@ contract StakeVault is AbstractCallback {
     // ------------------------------------------------------------------ user API
 
     /// @notice Lock a stake for a new goal. The stake is split into `weeks_` equal slices.
+    /// @param goal_           The goal in words, 1–140 bytes — what the referee checks each week.
     /// @param referee_        Wallet allowed to call confirm() — a friend, not the owner.
     /// @param penaltyTo_      Wallet that receives forfeited slices.
     /// @param weeks_          Number of periods, 1..12.
     /// @param periodSeconds_  Length of one period; configurable so demos can use minutes.
-    function createGoal(address referee_, address penaltyTo_, uint8 weeks_, uint64 periodSeconds_)
+    function createGoal(string calldata goal_, address referee_, address penaltyTo_, uint8 weeks_, uint64 periodSeconds_)
         external
         payable
         returns (uint256 goalId)
     {
+        if (bytes(goal_).length == 0 || bytes(goal_).length > 140) revert BadGoalText();
         if (referee_ == address(0)) revert BadReferee();
         if (penaltyTo_ == address(0)) revert BadPenaltyTo();
         if (weeks_ == 0 || weeks_ > MAX_WEEKS) revert BadWeeks();
@@ -115,9 +121,12 @@ contract StakeVault is AbstractCallback {
             active: true
         });
 
+        goalText[goalId] = goal_;
+
         emit GoalCreated(
             goalId, msg.sender, referee_, penaltyTo_, msg.value, weeks_, periodSeconds_, uint64(block.timestamp)
         );
+        emit GoalText(goalId, goal_);
     }
 
     /// @notice Referee confirms the current period once, while the goal is running.

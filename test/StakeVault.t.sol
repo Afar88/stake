@@ -37,6 +37,8 @@ contract StakeVaultTest is Test {
         uint256 indexed goalId, address indexed owner, address referee, address penaltyTo,
         uint256 stake, uint8 numWeeks, uint64 periodSeconds, uint64 startTime
     );
+    string internal constant GOAL_TEXT = "Run 3 times a week";
+    event GoalText(uint256 indexed goalId, string text);
     event CheckedIn(uint256 indexed goalId, uint256 periodIndex);
     event Forfeited(uint256 indexed goalId, uint256 periodIndex, uint256 amount);
     event Released(uint256 indexed goalId, uint256 amount);
@@ -50,7 +52,7 @@ contract StakeVaultTest is Test {
 
     function _create(uint8 weeks_) internal returns (uint256 goalId) {
         vm.prank(owner);
-        goalId = vault.createGoal{ value: 1 ether }(referee, penalty, weeks_, PERIOD);
+        goalId = vault.createGoal{ value: 1 ether }(GOAL_TEXT, referee, penalty, weeks_, PERIOD);
     }
 
     // ------------------------------------------------------------ createGoal
@@ -59,7 +61,7 @@ contract StakeVaultTest is Test {
         vm.prank(owner);
         vm.expectEmit(true, true, false, true);
         emit GoalCreated(0, owner, referee, penalty, 1 ether, 2, PERIOD, uint64(block.timestamp));
-        uint256 goalId = vault.createGoal{ value: 1 ether }(referee, penalty, 2, PERIOD);
+        uint256 goalId = vault.createGoal{ value: 1 ether }(GOAL_TEXT, referee, penalty, 2, PERIOD);
         assertEq(goalId, 0);
         (
             address o, address r, address p, uint256 stake,, uint8 w,
@@ -79,18 +81,50 @@ contract StakeVaultTest is Test {
     function test_CreateGoal_Validation() public {
         vm.startPrank(owner);
         vm.expectRevert(StakeVault.BadReferee.selector);
-        vault.createGoal{ value: 1 ether }(address(0), penalty, 2, PERIOD);
+        vault.createGoal{ value: 1 ether }(GOAL_TEXT, address(0), penalty, 2, PERIOD);
         vm.expectRevert(StakeVault.BadPenaltyTo.selector);
-        vault.createGoal{ value: 1 ether }(referee, address(0), 2, PERIOD);
+        vault.createGoal{ value: 1 ether }(GOAL_TEXT, referee, address(0), 2, PERIOD);
         vm.expectRevert(StakeVault.BadWeeks.selector);
-        vault.createGoal{ value: 1 ether }(referee, penalty, 0, PERIOD);
+        vault.createGoal{ value: 1 ether }(GOAL_TEXT, referee, penalty, 0, PERIOD);
         vm.expectRevert(StakeVault.BadWeeks.selector);
-        vault.createGoal{ value: 1 ether }(referee, penalty, 13, PERIOD);
+        vault.createGoal{ value: 1 ether }(GOAL_TEXT, referee, penalty, 13, PERIOD);
         vm.expectRevert(StakeVault.BadPeriodSeconds.selector);
-        vault.createGoal{ value: 1 ether }(referee, penalty, 2, 0);
+        vault.createGoal{ value: 1 ether }(GOAL_TEXT, referee, penalty, 2, 0);
         vm.expectRevert(StakeVault.NoStake.selector);
-        vault.createGoal{ value: 0 }(referee, penalty, 2, PERIOD);
+        vault.createGoal{ value: 0 }(GOAL_TEXT, referee, penalty, 2, PERIOD);
         vm.stopPrank();
+    }
+
+
+    function test_CreateGoal_StoresText() public {
+        uint256 goalId = _create(2);
+        assertEq(vault.goalText(goalId), GOAL_TEXT);
+    }
+
+    function test_CreateGoal_EmitsGoalText() public {
+        vm.prank(owner);
+        vm.expectEmit(true, false, false, true);
+        emit GoalText(0, GOAL_TEXT);
+        vault.createGoal{ value: 1 ether }(GOAL_TEXT, referee, penalty, 2, PERIOD);
+    }
+
+    function test_CreateGoal_EmptyText_Reverts() public {
+        vm.prank(owner);
+        vm.expectRevert(StakeVault.BadGoalText.selector);
+        vault.createGoal{ value: 1 ether }("", referee, penalty, 2, PERIOD);
+    }
+
+    function test_CreateGoal_TooLongText_Reverts() public {
+        vm.prank(owner);
+        vm.expectRevert(StakeVault.BadGoalText.selector);
+        vault.createGoal{ value: 1 ether }(new string(141), referee, penalty, 2, PERIOD);
+    }
+
+    function test_CreateGoal_MaxLengthText_Ok() public {
+        string memory text = new string(140);
+        vm.prank(owner);
+        uint256 goalId = vault.createGoal{ value: 1 ether }(text, referee, penalty, 2, PERIOD);
+        assertEq(bytes(vault.goalText(goalId)).length, 140);
     }
 
     // ------------------------------------------------------------ confirm
