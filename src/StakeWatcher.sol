@@ -8,7 +8,7 @@ import { IStakeVault } from "./interfaces/IStakeVault.sol";
 
 /// @title StakeWatcher
 /// @notice Reactive contract on Reactive Lasna. Mirrors StakeVault goals from Base Sepolia
-///         event logs, and on every Cron100 tick asks the vault (via callbacks) to forfeit
+///         event logs, and on every cron tick asks the vault (via callbacks) to forfeit
 ///         ended-unconfirmed periods and to release finished goals. No bot, no server.
 /// @dev The vault re-checks every rule with its own clock, so this contract only needs to be
 ///      eventually right: sends are idempotent on the vault side, and unacknowledged sends
@@ -21,6 +21,8 @@ contract StakeWatcher is AbstractReactive {
 
     uint256 internal constant CRON100_TOPIC_0 =
         0xb49937fb8970e19fd46d48f7e3fb00d659deac0347f79cd7cb542f0fc1503c70;
+    uint256 internal constant CRON1000_TOPIC_0 =
+        0xe20b31294d84c3661ddc8f423abb9c70310d0cf172aa2714ead78029b325e3f4;
     uint256 internal constant GOAL_CREATED_TOPIC_0 = uint256(keccak256(
         "GoalCreated(uint256,address,address,address,uint256,uint8,uint64,uint64)"
     ));
@@ -40,6 +42,9 @@ contract StakeWatcher is AbstractReactive {
     address public owner;
     address public vault;
     bool public paused;
+    /// @notice Topic 0 of the cron event the watcher is subscribed to.
+    ///         CRON1000 (every ~17 min) by default; CRON100 (every ~2 min) for demos.
+    uint256 public cronTopic;
 
     struct MirrorGoal {
         uint64 startTime;
@@ -70,6 +75,7 @@ contract StakeWatcher is AbstractReactive {
     event ReleaseRequested(uint256 indexed goalId);
     event Paused();
     event Resumed();
+    event CadenceSet(bool useCron100);
 
     modifier onlyOwner() {
         if (msg.sender != owner) revert NotOwner();
@@ -79,7 +85,8 @@ contract StakeWatcher is AbstractReactive {
     /// @notice Payable so the contract can hold REACT for billing from the start.
     constructor() payable {
         owner = msg.sender;
-        _subscribeCron();
+        cronTopic = CRON1000_TOPIC_0;
+        _subscribeCronTopic(cronTopic);
     }
 
     // ------------------------------------------------------------------ owner API
@@ -92,20 +99,34 @@ contract StakeWatcher is AbstractReactive {
         emit VaultSet(vault_);
     }
 
-    /// @notice Stop paying for Cron100 ticks.
+    /// @notice Stop paying for cron ticks.
     function pause() external onlyOwner {
         if (paused) return;
         paused = true;
-        _unsubscribeCron();
+        _unsubscribeCronTopic(cronTopic);
         emit Paused();
     }
 
-    /// @notice Resume Cron100 ticks.
+    /// @notice Resume cron ticks at the current cadence.
     function resume() external onlyOwner {
         if (!paused) return;
         paused = false;
-        _subscribeCron();
+        _subscribeCronTopic(cronTopic);
         emit Resumed();
+    }
+
+    /// @notice Switch the timer cadence. `true` = Cron100 (~2 min, demos),
+    ///         `false` = Cron1000 (~17 min, normal). Cron is billed every tick,
+    ///         so Cron1000 costs about a tenth of Cron100.
+    function setCadence(bool useCron100_) external onlyOwner {
+        uint256 newTopic = useCron100_ ? CRON100_TOPIC_0 : CRON1000_TOPIC_0;
+        if (newTopic == cronTopic) return;
+        if (!paused) {
+            _unsubscribeCronTopic(cronTopic);
+            _subscribeCronTopic(newTopic);
+        }
+        cronTopic = newTopic;
+        emit CadenceSet(useCron100_);
     }
 
     /// @notice Settles outstanding debt to the system contract from this contract's balance.
@@ -118,7 +139,7 @@ contract StakeWatcher is AbstractReactive {
     /// @inheritdoc IReactive
     /// @dev Routes on topic0 and checks opCode (topic count) before decoding anything.
     function react(LogRecord memory log_) external onlySystem {
-        if (log_.topic0 == CRON100_TOPIC_0) {
+        if (log_.topic0 == CRON100_TOPIC_0 || log_.topic0 == CRON1000_TOPIC_0) {
             if (log_.opCode != 2 || log_.contractAddress != LEGACY_SYSTEM_ADDR) return;
             if (!paused && vault != address(0)) _tick();
             return;
@@ -261,16 +282,16 @@ contract StakeWatcher is AbstractReactive {
 
     // ------------------------------------------------------------------ subscriptions
 
-    function _subscribeCron() internal {
+    function _subscribeCronTopic(uint256 topic0_) internal {
         SYSTEM.subscribe(
-            block.chainid, LEGACY_SYSTEM_ADDR, CRON100_TOPIC_0,
+            block.chainid, LEGACY_SYSTEM_ADDR, topic0_,
             REACTIVE_IGNORE, REACTIVE_IGNORE, REACTIVE_IGNORE
         );
     }
 
-    function _unsubscribeCron() internal {
+    function _unsubscribeCronTopic(uint256 topic0_) internal {
         SYSTEM.unsubscribe(
-            block.chainid, LEGACY_SYSTEM_ADDR, CRON100_TOPIC_0,
+            block.chainid, LEGACY_SYSTEM_ADDR, topic0_,
             REACTIVE_IGNORE, REACTIVE_IGNORE, REACTIVE_IGNORE
         );
     }

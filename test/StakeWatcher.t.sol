@@ -13,6 +13,7 @@ contract StakeWatcherTest is Test {
     address internal constant LEGACY = 0x0000000000000000000000000000000000fffFfF;
     uint256 internal constant BASE = 84532;
     uint256 internal constant CRON100 = 0xb49937fb8970e19fd46d48f7e3fb00d659deac0347f79cd7cb542f0fc1503c70;
+    uint256 internal constant CRON1000 = 0xe20b31294d84c3661ddc8f423abb9c70310d0cf172aa2714ead78029b325e3f4;
     uint256 internal constant GOAL_CREATED = uint256(keccak256(
         "GoalCreated(uint256,address,address,address,uint256,uint8,uint64,uint64)"
     ));
@@ -119,6 +120,84 @@ contract StakeWatcherTest is Test {
         vm.prank(makeAddr("rando"));
         vm.expectRevert(StakeWatcher.NotOwner.selector);
         watcher.pause();
+    }
+
+
+    // ------------------------------------------------------------ cadence
+
+    function test_ConstructorDefaultsToCron1000() public {
+        assertEq(watcher.cronTopic(), CRON1000);
+        (,, uint256 topic0,,,) = mock.subscriptions(0);
+        assertEq(topic0, CRON1000);
+    }
+
+    function test_SetCadence_SwitchesSubscription() public {
+        vm.prank(owner);
+        watcher.setCadence(true);
+        assertEq(watcher.cronTopic(), CRON100);
+        assertEq(mock.unsubscriptionCount(), 1);
+        (,, uint256 unsubbed,,,) = mock.unsubscriptions(0);
+        assertEq(unsubbed, CRON1000);
+        assertEq(mock.subscriptionCount(), 6);
+        (,, uint256 subbed,,,) = mock.subscriptions(5);
+        assertEq(subbed, CRON100);
+
+        // same cadence again: no-op
+        vm.prank(owner);
+        watcher.setCadence(true);
+        assertEq(mock.subscriptionCount(), 6);
+        assertEq(mock.unsubscriptionCount(), 1);
+
+        // back to slow
+        vm.prank(owner);
+        watcher.setCadence(false);
+        assertEq(watcher.cronTopic(), CRON1000);
+        assertEq(mock.subscriptionCount(), 7);
+        (,, uint256 subbed2,,,) = mock.subscriptions(6);
+        assertEq(subbed2, CRON1000);
+    }
+
+    function test_SetCadence_OnlyOwner() public {
+        vm.prank(makeAddr("rando"));
+        vm.expectRevert(StakeWatcher.NotOwner.selector);
+        watcher.setCadence(true);
+    }
+
+    function test_SetCadence_WhilePaused_NoSubscriptionChurn() public {
+        vm.prank(owner);
+        watcher.pause();
+        uint256 subs = mock.subscriptionCount();
+        uint256 unsubs = mock.unsubscriptionCount();
+        vm.prank(owner);
+        watcher.setCadence(true);
+        assertEq(mock.subscriptionCount(), subs);   // nothing re-subscribed while paused
+        assertEq(mock.unsubscriptionCount(), unsubs);
+        assertEq(watcher.cronTopic(), CRON100);
+        // resume picks up the new cadence
+        vm.prank(owner);
+        watcher.resume();
+        (,, uint256 topic0,,,) = mock.subscriptions(mock.subscriptionCount() - 1);
+        assertEq(topic0, CRON100);
+    }
+
+    function test_PauseResume_FollowsCadence() public {
+        vm.prank(owner);
+        watcher.setCadence(true);
+        vm.prank(owner);
+        watcher.pause();
+        (,, uint256 unsubbed,,,) = mock.unsubscriptions(mock.unsubscriptionCount() - 1);
+        assertEq(unsubbed, CRON100);
+    }
+
+    function test_Tick_WorksOnCron1000() public {
+        _goalCreated(0, uint64(block.timestamp - PERIOD - 1), 2);
+        IReactive.LogRecord memory l;
+        l.topic0 = CRON1000;
+        l.opCode = 2;
+        l.contractAddress = LEGACY;
+        vm.prank(SYSTEM_ADDR);
+        watcher.react(l);
+        assertEq(mock.callbackCount(), 1);
     }
 
     // ------------------------------------------------------------ GoalCreated
