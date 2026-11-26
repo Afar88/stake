@@ -6,6 +6,8 @@ Lock ETH on a weekly goal. A friend confirms each week. Miss a week, lose that w
 
 Live page: **https://afar88.github.io/stake/**
 
+Demo video (under 2 minutes): **https://youtube.com/shorts/l13Ax7nwKA4**
+
 ## Why I built it
 
 I set weekly goals and drop them by week two. Putting money on the line, with a friend as referee, makes me show up. Nobody has to chase me: the watcher does it on its own.
@@ -16,6 +18,18 @@ I set weekly goals and drop them by week two. Putting money on the line, with a 
 2. Write the goal in a few words, fill in the referee, the penalty wallet, the number of weeks and the stake, and lock it. The goal line is stored on-chain so owner and referee agree on what counts.
 3. The referee confirms each week from the same page.
 4. Miss a week and that week's slice goes to the penalty wallet. Finish the goal and the rest comes back.
+
+## Screenshots
+
+From the demo run on a phone (goal #5, 5-minute weeks).
+
+| New goal | Stake locked | Week 1 confirmed |
+| --- | --- | --- |
+| ![New goal form](docs/screenshots/goal-form.jpg) | ![Stake locked, Reactive watching](docs/screenshots/goal-live.jpg) | ![Referee confirmed week 1](docs/screenshots/referee-confirm.jpg) |
+
+| Week 2 missed, settled | Callback on Blockscout |
+| --- | --- |
+| ![Week 2 missed, share sent to penalty](docs/screenshots/settled.jpg) | ![deliverCallback on CallbackProxy, Success](docs/screenshots/blockscout-callback.jpg) |
 
 ## How it works
 
@@ -56,6 +70,25 @@ You ── createGoal(referee, penalty, weeks, periodSeconds) ──▶ StakeVau
 ## Running cost
 
 The watcher is paused between demos to save testnet fuel. Call `resume()` to run it again. Measured on Cron100 during the demo run: about **0.39 lREACT per hour** of continuous ticking (0.013 per tick); on Cron1000 the same work costs about **0.046 lREACT per hour**. The vault's callback reserve on Base Sepolia is a few milli-ETH and lasts for many goals.
+
+## Demo run (goal #5, 5-minute "weeks", shown in the video)
+
+"Eat 3 times a day", 2 weeks, stake 0.00001 ETH. Week 1 confirmed by the referee, week 2 skipped. The watcher settled it on its own: week 2's share (0.000005 ETH) went to the penalty wallet, the rest came back to the owner.
+
+| Step | Chain | Tx hash |
+| --- | --- | --- |
+| GoalCreated | Base Sepolia | `0xf8c39220022fbd98d99fefc0ba100fa14433eddf9870e84bd793a1dc8bc1b876` |
+| Mirror: GoalCreated | Lasna | `0xbefc74363e0b9717fd88bf96a5bef2c85b6b8b5287d698767e8c41a8c868da9e` |
+| CheckedIn (week 1) | Base Sepolia | `0xed993f1b83877886bb75d69fe88bfd43cf79f2b176216a48b085de40398b2a08` |
+| Mirror: CheckedIn | Lasna | `0x3d49016a176279eed962ee884f29caf6f259d02a50a47a2e51d64f031e62c4ab` |
+| Cron tick → forfeit requested | Lasna | `0x8e2634e222d28e6694705453ef5019b67455c19ed3c0eaed47a11f85c06467ae` |
+| **Forfeited** — 0.000005 ETH → penalty | Base Sepolia | `0x1457ab9f254b176647c9b2d789d4d7e62f14e4db11051d58fdf52f06d4d50489` |
+| Mirror: Forfeited | Lasna | `0x8ddd9338a78da28334d953ef6265edc5605abbb6cb15263be4feefe08b98531d` |
+| Cron tick → release requested | Lasna | `0x9cc9308204dced9b4270bac9956d7751a5b73b61172775702d19b7326917a701` |
+| **Released** — rest → owner | Base Sepolia | `0x91b5f0f44a8e1138a3fed96ff51b65cbd5acec1870f08d58dcbd9354ac84ecbf` |
+| Mirror: Released | Lasna | `0x8493a2113ad5d39424512c0d3dfaf630a5069834d752f2855020ff4ffa7f320f` |
+
+Each hop landed within about 2 seconds of the one before it (block timestamps, ±2 s clock skew between chains). Settling waits for the next cron tick, about every 2 minutes.
 
 ## Live run (10-minute "weeks")
 
