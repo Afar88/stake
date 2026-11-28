@@ -27,8 +27,6 @@
 
 **Demo video:** [Watch the demo](https://youtube.com/shorts/l13Ax7nwKA4)
 
-Lock ETH on a weekly goal. A friend confirms each week. Miss a week, lose that week's slice. Finish the goal, get the rest back. No bot, no server — a Reactive Network contract does the chasing.
-
 **Testnet only.** Built for the Reactive Omni Buildathon (DoraHacks, "Set It and Forget It").
 
 ## Why I built it
