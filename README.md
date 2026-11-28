@@ -1,12 +1,35 @@
 # stake
 
+## For the judges
+
+**What it is:** Stake is a personal commitment vault. You lock a little ETH behind a goal ("Run 3 times a week"), a friend confirms each week, and Reactive automatically forfeits a slice for every missed week and releases the rest at the end. No server, no one pressing buttons.
+
+**Track:** Set It and Forget It.
+
+**Proof — goal #5 ("Eat 3 times a day")**
+
+| Step | Chain | Transaction |
+| --- | --- | --- |
+| Goal created | Base Sepolia | [View transaction](https://base-sepolia.blockscout.com/tx/0xf8c39220022fbd98d99fefc0ba100fa14433eddf9870e84bd793a1dc8bc1b876) |
+| Mirrored (GoalCreated) | Reactive Lasna | [View transaction](https://lasna.reactscan.net/tx/0xbefc74363e0b9717fd88bf96a5bef2c85b6b8b5287d698767e8c41a8c868da9e) |
+| Cron forfeit request | Reactive Lasna | [View transaction](https://lasna.reactscan.net/tx/0x8e2634e222d28e6694705453ef5019b67455c19ed3c0eaed47a11f85c06467ae) |
+| Forfeit callback | Base Sepolia | [View transaction](https://base-sepolia.blockscout.com/tx/0x1457ab9f254b176647c9b2d789d4d7e62f14e4db11051d58fdf52f06d4d50489) |
+| Cron release request | Reactive Lasna | [View transaction](https://lasna.reactscan.net/tx/0x9cc9308204dced9b4270bac9956d7751a5b73b61172775702d19b7326917a701) |
+| Release callback | Base Sepolia | [View transaction](https://base-sepolia.blockscout.com/tx/0x91b5f0f44a8e1138a3fed96ff51b65cbd5acec1870f08d58dcbd9354ac84ecbf) |
+
+**Contracts:**
+- [StakeVault (Base Sepolia)](https://base-sepolia.blockscout.com/address/0xA7Ba5589A4bB572d6Aa19EECd0F20cf236A1Cb30) — `0xA7Ba5589A4bB572d6Aa19EECd0F20cf236A1Cb30`
+- [StakeWatcher (Reactive Lasna)](https://lasna.reactscan.net/address/0x49012E6b5C0441324B0fA7C78e616a4852ddeB0D) — `0x49012E6b5C0441324B0fA7C78e616a4852ddeB0D`
+
+**Measured speed:** Base event mirrored on Lasna in 0 to 2 s; callback lands back on Base in 1 to 2 s; the weekly check runs on Reactive's cron.
+
+**Try it in 2 minutes:** Open [Stake](https://afar88.github.io/stake/) with a Base Sepolia wallet, create a goal with 0.00001 ETH and 5-minute "weeks", skip a confirm, and watch the forfeit and release happen on their own.
+
+**Demo video:** [Watch the demo](https://youtube.com/shorts/l13Ax7nwKA4)
+
 Lock ETH on a weekly goal. A friend confirms each week. Miss a week, lose that week's slice. Finish the goal, get the rest back. No bot, no server — a Reactive Network contract does the chasing.
 
 **Testnet only.** Built for the Reactive Omni Buildathon (DoraHacks, "Set It and Forget It").
-
-Live page: **https://afar88.github.io/stake/**
-
-Demo video (under 2 minutes): **https://youtube.com/shorts/l13Ax7nwKA4**
 
 ## Why I built it
 
@@ -75,20 +98,15 @@ The watcher is paused between demos to save testnet fuel. Call `resume()` to run
 
 "Eat 3 times a day", 2 weeks, stake 0.00001 ETH. Week 1 confirmed by the referee, week 2 skipped. The watcher settled it on its own: week 2's share (0.000005 ETH) went to the penalty wallet, the rest came back to the owner.
 
-| Step | Chain | Tx hash |
-| --- | --- | --- |
-| GoalCreated | Base Sepolia | `0xf8c39220022fbd98d99fefc0ba100fa14433eddf9870e84bd793a1dc8bc1b876` |
-| Mirror: GoalCreated | Lasna | `0xbefc74363e0b9717fd88bf96a5bef2c85b6b8b5287d698767e8c41a8c868da9e` |
-| CheckedIn (week 1) | Base Sepolia | `0xed993f1b83877886bb75d69fe88bfd43cf79f2b176216a48b085de40398b2a08` |
-| Mirror: CheckedIn | Lasna | `0x3d49016a176279eed962ee884f29caf6f259d02a50a47a2e51d64f031e62c4ab` |
-| Cron tick → forfeit requested | Lasna | `0x8e2634e222d28e6694705453ef5019b67455c19ed3c0eaed47a11f85c06467ae` |
-| **Forfeited** — 0.000005 ETH → penalty | Base Sepolia | `0x1457ab9f254b176647c9b2d789d4d7e62f14e4db11051d58fdf52f06d4d50489` |
-| Mirror: Forfeited | Lasna | `0x8ddd9338a78da28334d953ef6265edc5605abbb6cb15263be4feefe08b98531d` |
-| Cron tick → release requested | Lasna | `0x9cc9308204dced9b4270bac9956d7751a5b73b61172775702d19b7326917a701` |
-| **Released** — rest → owner | Base Sepolia | `0x91b5f0f44a8e1138a3fed96ff51b65cbd5acec1870f08d58dcbd9354ac84ecbf` |
-| Mirror: Released | Lasna | `0x8493a2113ad5d39424512c0d3dfaf630a5069834d752f2855020ff4ffa7f320f` |
 
-Each hop landed within about 2 seconds of the one before it (block timestamps, ±2 s clock skew between chains). Settling waits for the next cron tick, about every 2 minutes.
+The main transaction path is listed in [the proof table above](#for-the-judges). The remaining events from the same run are included here for completeness.
+
+| Additional event | Chain | Transaction |
+| --- | --- | --- |
+| CheckedIn (week 1) | Base Sepolia | [View transaction](https://base-sepolia.blockscout.com/tx/0xed993f1b83877886bb75d69fe88bfd43cf79f2b176216a48b085de40398b2a08) |
+| Mirrored (CheckedIn) | Reactive Lasna | [View transaction](https://lasna.reactscan.net/tx/0x3d49016a176279eed962ee884f29caf6f259d02a50a47a2e51d64f031e62c4ab) |
+| Mirrored (Forfeited) | Reactive Lasna | [View transaction](https://lasna.reactscan.net/tx/0x8ddd9338a78da28334d953ef6265edc5605abbb6cb15263be4feefe08b98531d) |
+| Mirrored (Released) | Reactive Lasna | [View transaction](https://lasna.reactscan.net/tx/0x8493a2113ad5d39424512c0d3dfaf630a5069834d752f2855020ff4ffa7f320f) |
 
 ## Live run (10-minute "weeks")
 
