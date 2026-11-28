@@ -99,7 +99,14 @@ The watcher is paused between demos to save testnet fuel. Call `resume()` to run
 "Eat 3 times a day", 2 weeks, stake 0.00001 ETH. Week 1 confirmed by the referee, week 2 skipped. The watcher settled it on its own: week 2's share (0.000005 ETH) went to the penalty wallet, the rest came back to the owner.
 
 
-Transaction-by-transaction receipts for this demo are listed in [the proof table above](#for-the-judges).
+The main transaction path is listed in [the proof table above](#for-the-judges). The remaining events from the same run are included here for completeness.
+
+| Additional event | Chain | Transaction |
+| --- | --- | --- |
+| CheckedIn (week 1) | Base Sepolia | [View transaction](https://base-sepolia.blockscout.com/tx/0xed993f1b83877886bb75d69fe88bfd43cf79f2b176216a48b085de40398b2a08) |
+| Mirrored (CheckedIn) | Reactive Lasna | [View transaction](https://lasna.reactscan.net/tx/0x3d49016a176279eed962ee884f29caf6f259d02a50a47a2e51d64f031e62c4ab) |
+| Mirrored (Forfeited) | Reactive Lasna | [View transaction](https://lasna.reactscan.net/tx/0x8ddd9338a78da28334d953ef6265edc5605abbb6cb15263be4feefe08b98531d) |
+| Mirrored (Released) | Reactive Lasna | [View transaction](https://lasna.reactscan.net/tx/0x8493a2113ad5d39424512c0d3dfaf630a5069834d752f2855020ff4ffa7f320f) |
 
 ## Live run (10-minute "weeks")
 
